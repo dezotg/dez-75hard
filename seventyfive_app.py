@@ -14,7 +14,7 @@ import pandas as pd
 
 st.set_page_config(
     page_title="Dez 75 Hard Command Center",
-    page_icon="ðŸ”¥",
+    page_icon="🔥",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -1230,7 +1230,7 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
     st.markdown(
         f"""
         <div class="top-brand">
-            <div class="brand-left">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¥ Dez 75 Hard</div>
+            <div class="brand-left">🔥 Dez 75 Hard</div>
             <div class="brand-right">Red Premium Edition</div>
         </div>
 
@@ -1238,7 +1238,7 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
             <div class="hero-eyebrow">Dez Performance System</div>
             <div class="hero-title">Burn Fat.<br>Build Muscle.<br>Stay Locked In.</div>
             <div class="hero-sub">
-                Premium command center for DezÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s 75 Hard run ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â training, hydration, reading, nutrition, recovery, and streak protection.
+                Premium command center for Dez's 75 Hard run - training, hydration, reading, nutrition, recovery, and streak protection.
             </div>
             <div class="pill-row">
                 <span class="pill">Day {day_number(profile, selected_day)}</span>
@@ -1447,7 +1447,7 @@ with menu_col:
 inject_sidebar_state_css(st.session_state["custom_sidebar_open"])
 
 with st.sidebar:
-    st.markdown("## ðŸ”¥ Dez 75 Hard")
+    st.markdown("## 🔥 Dez 75 Hard")
     st.caption("Red premium edition")
 
     selected_day = st.date_input("Selected day", value=date.today())
@@ -1524,7 +1524,7 @@ with tab_home:
     with b1:
         feature_banner(
             "Built in the work. Proven by the reps.",
-            "DezÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s training system now feels more like a premium fitness brand ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â stronger visuals, sharper structure, and cleaner momentum.",
+            "Dez's training system now feels more like a premium fitness brand - stronger visuals, sharper structure, and cleaner momentum.",
             image_path=WORKOUT_IMG if os.path.exists(WORKOUT_IMG) else HERO_IMG,
             bg_size="cover",
             bg_position="center center",
@@ -1541,7 +1541,7 @@ with tab_home:
 
     m1, m2, m3 = st.columns(3)
     with m1:
-        mini_banner("TodayÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
+        mini_banner("Today's Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
     with m2:
         mini_banner("Progress Zone", "Daily consistency compounds into visible change.", SCALE_IMG)
     with m3:
@@ -1572,12 +1572,12 @@ with tab_home:
         st.progress(workouts_done / 2, text=f"{workouts_done} / 2 workouts completed")
 
         st.markdown("### Mission Status")
-        st.write("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Diet locked in" if current_day.get("diet_followed") else "ÃƒÂ¢Ã‚Â¬Ã…â€œ Diet still open")
-        st.write("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Progress photo done" if current_day.get("progress_picture") else "ÃƒÂ¢Ã‚Â¬Ã…â€œ Progress photo still open")
+        st.write("? Diet locked in" if current_day.get("diet_followed") else "? Diet still open")
+        st.write("? Progress photo done" if current_day.get("progress_picture") else "? Progress photo still open")
         st.write(
-            "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Outdoor workout logged"
+            "? Outdoor workout logged"
             if current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
-            else "ÃƒÂ¢Ã‚Â¬Ã…â€œ Outdoor workout not logged yet"
+            else "? Outdoor workout not logged yet"
         )
 
         outdoor_logged = current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
@@ -1590,7 +1590,7 @@ with tab_home:
         ])
 
     with right:
-        section_card("Focus", "DezÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s Command Panel", "Use this as your quick daily lock-in zone.")
+        section_card("Focus", "Dez's Command Panel", "Use this as your quick daily lock-in zone.")
 
         remaining = []
         if current_day.get("water_oz", 0) < water_goal:
@@ -1614,8 +1614,8 @@ with tab_home:
             st.markdown(
                 f"""
                 <div class="glass-card">
-                    <strong>{sw.get("focus", "Workout")}</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {sw.get("duration", 45)} min<br>
-                    <span class="small-muted">{sw.get("goal", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {sw.get("equipment", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {sw.get("intensity", "")}</span><br><br>
+                    <strong>{sw.get("focus", "Workout")}</strong> - {sw.get("duration", 45)} min<br>
+                    <span class="small-muted">{sw.get("goal", "")} - {sw.get("equipment", "")} - {sw.get("intensity", "")}</span><br><br>
                     {sw.get("note", "")}
                 </div>
                 """,
