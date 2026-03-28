@@ -139,10 +139,20 @@ def inject_styles():
         display: none !important;
     }
 
+    button[kind="header"] {
+        color: transparent !important;
+        font-size: 0 !important;
+    }
+
     button[kind="header"] div[data-testid="stMarkdownContainer"],
     button[kind="header"] p,
     button[kind="header"] span:not([aria-hidden="true"]) {
         display: none !important;
+    }
+
+    button[kind="header"] span[aria-hidden="true"] {
+        font-size: 1.25rem !important;
+        color: #ffffff !important;
     }
 
     .stApp {
