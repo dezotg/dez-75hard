@@ -4,6 +4,7 @@ import os
 import calendar
 import random
 import base64
+import hmac
 from html import escape
 from datetime import date, datetime, timedelta
 from typing import Dict, Any
@@ -766,6 +767,44 @@ def inject_styles():
     """, unsafe_allow_html=True)
 
 
+def get_app_password() -> str:
+    secret_password = ""
+    try:
+        secret_password = str(st.secrets.get("APP_PASSWORD", "")).strip()
+    except Exception:
+        secret_password = ""
+    return os.getenv("APP_PASSWORD", secret_password).strip()
+
+
+def require_app_password():
+    app_password = get_app_password()
+    if not app_password:
+        st.info("Password protection is ready. Add `APP_PASSWORD` in Streamlit app secrets to turn it on.")
+        return
+
+    if st.session_state.get("app_unlocked"):
+        return
+
+    st.markdown(
+        """
+        <div class="glass-card" style="max-width:520px; margin:3rem auto 0 auto; text-align:center;">
+            <div class="section-kicker">Private Access</div>
+            <div class="section-title">Enter Password</div>
+            <div class="section-sub">This app is locked so only you can open and edit it.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    entered = st.text_input("App password", type="password", placeholder="Enter your password")
+    if st.button("Unlock App", use_container_width=True):
+        if hmac.compare_digest(entered, app_password):
+            st.session_state["app_unlocked"] = True
+            st.rerun()
+        else:
+            st.error("Wrong password.")
+    st.stop()
+
+
 # =========================================================
 # DATA
 # =========================================================
@@ -1259,6 +1298,7 @@ def build_workout(goal: str, focus: str, equipment: str, duration: int, intensit
 # APP START
 # =========================================================
 inject_styles()
+require_app_password()
 data = load_data()
 profile = data["profile"]
 
