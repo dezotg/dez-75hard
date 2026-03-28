@@ -779,30 +779,29 @@ def get_app_password() -> str:
 def require_app_password():
     app_password = get_app_password()
     if not app_password:
-        st.info("Password protection is ready. Add `APP_PASSWORD` in Streamlit app secrets to turn it on.")
-        return
+        return True
 
-    if st.session_state.get("app_unlocked"):
-        return
+    unlocked = bool(st.session_state.get("app_unlocked"))
+    st.markdown("---")
+    st.markdown("### Admin Mode")
 
-    st.markdown(
-        """
-        <div class="glass-card" style="max-width:520px; margin:3rem auto 0 auto; text-align:center;">
-            <div class="section-kicker">Private Access</div>
-            <div class="section-title">Enter Password</div>
-            <div class="section-sub">This app is locked so only you can open and edit it.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    entered = st.text_input("App password", type="password", placeholder="Enter your password")
-    if st.button("Unlock App"):
+    if unlocked:
+        st.success("Edit mode unlocked")
+        if st.button("Lock Edit Mode"):
+            st.session_state["app_unlocked"] = False
+            st.rerun()
+        return True
+
+    entered = st.text_input("Edit password", type="password", placeholder="Enter password to edit", key="edit_password")
+    if st.button("Unlock Edit Mode"):
         if hmac.compare_digest(entered, app_password):
             st.session_state["app_unlocked"] = True
             st.rerun()
         else:
             st.error("Wrong password.")
-    st.stop()
+
+    st.caption("View mode is on. Anyone can look, but only unlocked admin mode can save changes.")
+    return False
 
 
 # =========================================================
@@ -1298,7 +1297,6 @@ def build_workout(goal: str, focus: str, equipment: str, duration: int, intensit
 # APP START
 # =========================================================
 inject_styles()
-require_app_password()
 data = load_data()
 profile = data["profile"]
 
@@ -1308,6 +1306,7 @@ with st.sidebar:
 
     selected_day = st.date_input("Selected day", value=date.today())
     current_day = get_day(data, selected_day)
+    can_edit = require_app_password()
 
     st.markdown("---")
     st.markdown("### Quick Stats")
@@ -1317,29 +1316,32 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### Profile")
-    profile["name"] = st.text_input("Name", value=profile.get("name", "Dez"))
-    profile["phase_name"] = st.text_input("Phase / Motto", value=profile.get("phase_name", "Built Different"))
+    profile["name"] = st.text_input("Name", value=profile.get("name", "Dez"), disabled=not can_edit)
+    profile["phase_name"] = st.text_input("Phase / Motto", value=profile.get("phase_name", "Built Different"), disabled=not can_edit)
     profile["start_date"] = str(
         st.date_input(
             "75 Hard start date",
             value=datetime.strptime(profile.get("start_date", str(date.today())), "%Y-%m-%d").date()
-            if profile.get("start_date") else date.today()
+            if profile.get("start_date") else date.today(),
+            disabled=not can_edit
         )
     )
 
     st.markdown("### Goal Settings")
-    profile["daily_water_goal_oz"] = st.number_input("Water goal (oz)", min_value=32, max_value=256, value=int(profile.get("daily_water_goal_oz", 128)), step=8)
-    profile["daily_pages_goal"] = st.number_input("Pages goal", min_value=1, max_value=100, value=int(profile.get("daily_pages_goal", 10)), step=1)
-    profile["target_calories"] = st.number_input("Calories target", min_value=1000, max_value=6000, value=int(profile.get("target_calories", 2393)), step=10)
-    profile["target_protein"] = st.number_input("Protein target", min_value=50, max_value=400, value=int(profile.get("target_protein", 207)), step=1)
-    profile["target_carbs"] = st.number_input("Carbs target", min_value=0, max_value=600, value=int(profile.get("target_carbs", 241)), step=1)
-    profile["target_fats"] = st.number_input("Fats target", min_value=0, max_value=200, value=int(profile.get("target_fats", 66)), step=1)
+    profile["daily_water_goal_oz"] = st.number_input("Water goal (oz)", min_value=32, max_value=256, value=int(profile.get("daily_water_goal_oz", 128)), step=8, disabled=not can_edit)
+    profile["daily_pages_goal"] = st.number_input("Pages goal", min_value=1, max_value=100, value=int(profile.get("daily_pages_goal", 10)), step=1, disabled=not can_edit)
+    profile["target_calories"] = st.number_input("Calories target", min_value=1000, max_value=6000, value=int(profile.get("target_calories", 2393)), step=10, disabled=not can_edit)
+    profile["target_protein"] = st.number_input("Protein target", min_value=50, max_value=400, value=int(profile.get("target_protein", 207)), step=1, disabled=not can_edit)
+    profile["target_carbs"] = st.number_input("Carbs target", min_value=0, max_value=600, value=int(profile.get("target_carbs", 241)), step=1, disabled=not can_edit)
+    profile["target_fats"] = st.number_input("Fats target", min_value=0, max_value=200, value=int(profile.get("target_fats", 66)), step=1, disabled=not can_edit)
 
-save_data(data)
+if can_edit:
+    save_data(data)
 
 current_day = get_day(data, selected_day)
 current_day["discipline_score"] = calc_score(current_day, profile)
-save_data(data)
+if can_edit:
+    save_data(data)
 
 score_val = calc_score(current_day, profile)
 streak_val = current_streak(data)
@@ -1475,8 +1477,8 @@ with tab_home:
         else:
             st.caption("No saved generated workout yet for this day.")
 
-        note = st.text_area("Daily note", value=current_day.get("notes", ""), height=130, placeholder="Write how the day felt, mood, wins, cravings, training notes...")
-        if st.button("Save Daily Note"):
+        note = st.text_area("Daily note", value=current_day.get("notes", ""), height=130, placeholder="Write how the day felt, mood, wins, cravings, training notes...", disabled=not can_edit)
+        if st.button("Save Daily Note", disabled=not can_edit):
             current_day["notes"] = note
             save_data(data)
             st.success("Daily note saved.")
@@ -1490,25 +1492,25 @@ with tab_checklist:
     left, right = st.columns([1.1, 1])
 
     with left:
-        current_day["water_oz"] = st.number_input("Water consumed (oz)", min_value=0, max_value=300, value=int(current_day.get("water_oz", 0)), step=1)
-        current_day["pages_read"] = st.number_input("Pages read", min_value=0, max_value=100, value=int(current_day.get("pages_read", 0)), step=1)
+        current_day["water_oz"] = st.number_input("Water consumed (oz)", min_value=0, max_value=300, value=int(current_day.get("water_oz", 0)), step=1, disabled=not can_edit)
+        current_day["pages_read"] = st.number_input("Pages read", min_value=0, max_value=100, value=int(current_day.get("pages_read", 0)), step=1, disabled=not can_edit)
 
-        current_day["diet_followed"] = st.checkbox("Diet Followed", value=bool(current_day.get("diet_followed", False)))
-        current_day["progress_picture"] = st.checkbox("Progress Photo", value=bool(current_day.get("progress_picture", False)))
+        current_day["diet_followed"] = st.checkbox("Diet Followed", value=bool(current_day.get("diet_followed", False)), disabled=not can_edit)
+        current_day["progress_picture"] = st.checkbox("Progress Photo", value=bool(current_day.get("progress_picture", False)), disabled=not can_edit)
 
         st.markdown("### Workout 1")
-        current_day["workout_1_done"] = st.checkbox("Workout 1 done", value=bool(current_day.get("workout_1_done", False)))
-        current_day["workout_1_type"] = st.selectbox("Workout 1 type", ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"], index=["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"].index(current_day.get("workout_1_type", "") if current_day.get("workout_1_type", "") in ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"] else ""))
-        current_day["workout_1_location"] = st.selectbox("Workout 1 location", ["", "Outdoor", "Gym", "Home", "Other"], index=["", "Outdoor", "Gym", "Home", "Other"].index(current_day.get("workout_1_location", "") if current_day.get("workout_1_location", "") in ["", "Outdoor", "Gym", "Home", "Other"] else ""))
-        current_day["workout_1_minutes"] = st.number_input("Workout 1 minutes", min_value=0, max_value=240, value=int(current_day.get("workout_1_minutes", 45)), step=1)
+        current_day["workout_1_done"] = st.checkbox("Workout 1 done", value=bool(current_day.get("workout_1_done", False)), disabled=not can_edit)
+        current_day["workout_1_type"] = st.selectbox("Workout 1 type", ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"], index=["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"].index(current_day.get("workout_1_type", "") if current_day.get("workout_1_type", "") in ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"] else ""), disabled=not can_edit)
+        current_day["workout_1_location"] = st.selectbox("Workout 1 location", ["", "Outdoor", "Gym", "Home", "Other"], index=["", "Outdoor", "Gym", "Home", "Other"].index(current_day.get("workout_1_location", "") if current_day.get("workout_1_location", "") in ["", "Outdoor", "Gym", "Home", "Other"] else ""), disabled=not can_edit)
+        current_day["workout_1_minutes"] = st.number_input("Workout 1 minutes", min_value=0, max_value=240, value=int(current_day.get("workout_1_minutes", 45)), step=1, disabled=not can_edit)
 
         st.markdown("### Workout 2")
-        current_day["workout_2_done"] = st.checkbox("Workout 2 done", value=bool(current_day.get("workout_2_done", False)))
-        current_day["workout_2_type"] = st.selectbox("Workout 2 type", ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"], index=["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"].index(current_day.get("workout_2_type", "") if current_day.get("workout_2_type", "") in ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"] else ""), key="w2type")
-        current_day["workout_2_location"] = st.selectbox("Workout 2 location", ["", "Outdoor", "Gym", "Home", "Other"], index=["", "Outdoor", "Gym", "Home", "Other"].index(current_day.get("workout_2_location", "") if current_day.get("workout_2_location", "") in ["", "Outdoor", "Gym", "Home", "Other"] else ""), key="w2loc")
-        current_day["workout_2_minutes"] = st.number_input("Workout 2 minutes", min_value=0, max_value=240, value=int(current_day.get("workout_2_minutes", 45)), step=1, key="w2mins")
+        current_day["workout_2_done"] = st.checkbox("Workout 2 done", value=bool(current_day.get("workout_2_done", False)), disabled=not can_edit)
+        current_day["workout_2_type"] = st.selectbox("Workout 2 type", ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"], index=["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"].index(current_day.get("workout_2_type", "") if current_day.get("workout_2_type", "") in ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"] else ""), key="w2type", disabled=not can_edit)
+        current_day["workout_2_location"] = st.selectbox("Workout 2 location", ["", "Outdoor", "Gym", "Home", "Other"], index=["", "Outdoor", "Gym", "Home", "Other"].index(current_day.get("workout_2_location", "") if current_day.get("workout_2_location", "") in ["", "Outdoor", "Gym", "Home", "Other"] else ""), key="w2loc", disabled=not can_edit)
+        current_day["workout_2_minutes"] = st.number_input("Workout 2 minutes", min_value=0, max_value=240, value=int(current_day.get("workout_2_minutes", 45)), step=1, key="w2mins", disabled=not can_edit)
 
-        if st.button("Save Checklist"):
+        if st.button("Save Checklist", disabled=not can_edit):
             current_day["discipline_score"] = calc_score(current_day, profile)
             save_data(data)
             st.success("Checklist saved.")
@@ -1525,8 +1527,8 @@ with tab_checklist:
         st.write(f"Workout 1: {'Done' if current_day.get('workout_1_done') else 'Open'}")
         st.write(f"Workout 2: {'Done' if current_day.get('workout_2_done') else 'Open'}")
 
-        notes = st.text_area("Checklist notes", value=current_day.get("notes", ""), height=160, key="checklistnotes")
-        if st.button("Save Notes"):
+        notes = st.text_area("Checklist notes", value=current_day.get("notes", ""), height=160, key="checklistnotes", disabled=not can_edit)
+        if st.button("Save Notes", disabled=not can_edit):
             current_day["notes"] = notes
             save_data(data)
             st.success("Notes saved.")
@@ -1563,7 +1565,7 @@ with tab_workouts:
         if st.button("Generate Workout"):
             st.session_state["generated_workout"] = build_workout(goal, focus, equipment, duration, intensity)
 
-        if st.button("Save Workout To Day"):
+        if st.button("Save Workout To Day", disabled=not can_edit):
             if "generated_workout" in st.session_state:
                 current_day["saved_workout"] = st.session_state["generated_workout"]
                 save_data(data)
@@ -1625,13 +1627,13 @@ with tab_macros:
     left, right = st.columns(2)
 
     with left:
-        current_day["weight"] = st.number_input("Weight", min_value=0.0, max_value=1000.0, value=float(current_day.get("weight") or 0.0), step=0.1, format="%.1f")
-        current_day["calories"] = st.number_input("Calories", min_value=0, max_value=10000, value=int(current_day.get("calories") or 0), step=1)
-        current_day["protein"] = st.number_input("Protein (g)", min_value=0, max_value=500, value=int(current_day.get("protein") or 0), step=1)
-        current_day["carbs"] = st.number_input("Carbs (g)", min_value=0, max_value=1000, value=int(current_day.get("carbs") or 0), step=1)
-        current_day["fats"] = st.number_input("Fats (g)", min_value=0, max_value=300, value=int(current_day.get("fats") or 0), step=1)
+        current_day["weight"] = st.number_input("Weight", min_value=0.0, max_value=1000.0, value=float(current_day.get("weight") or 0.0), step=0.1, format="%.1f", disabled=not can_edit)
+        current_day["calories"] = st.number_input("Calories", min_value=0, max_value=10000, value=int(current_day.get("calories") or 0), step=1, disabled=not can_edit)
+        current_day["protein"] = st.number_input("Protein (g)", min_value=0, max_value=500, value=int(current_day.get("protein") or 0), step=1, disabled=not can_edit)
+        current_day["carbs"] = st.number_input("Carbs (g)", min_value=0, max_value=1000, value=int(current_day.get("carbs") or 0), step=1, disabled=not can_edit)
+        current_day["fats"] = st.number_input("Fats (g)", min_value=0, max_value=300, value=int(current_day.get("fats") or 0), step=1, disabled=not can_edit)
 
-        if st.button("Save Macros & Weight"):
+        if st.button("Save Macros & Weight", disabled=not can_edit):
             save_data(data)
             st.success("Macros and weight saved.")
 
@@ -1767,10 +1769,10 @@ with tab_coach:
         else:
             st.markdown(f"<div class='coach-ai'><strong>Coach:</strong><br>{msg.get('text', '')}</div>", unsafe_allow_html=True)
 
-    user_msg = st.text_input("Message the coach", placeholder="Ask for motivation, status, what is left, workout help...")
+    user_msg = st.text_input("Message the coach", placeholder="Ask for motivation, status, what is left, workout help...", disabled=not can_edit)
     cc1, cc2 = st.columns([1, 1])
     with cc1:
-        if st.button("Send to Coach"):
+        if st.button("Send to Coach", disabled=not can_edit):
             if user_msg.strip():
                 data["coach_chat"].append({"role": "user", "text": user_msg.strip()})
                 reply = fallback_coach_response(user_msg.strip(), current_day, profile)
@@ -1778,7 +1780,7 @@ with tab_coach:
                 save_data(data)
                 st.rerun()
     with cc2:
-        if st.button("Clear Chat"):
+        if st.button("Clear Chat", disabled=not can_edit):
             data["coach_chat"] = [{"role": "ai", "text": "Chat reset. Good. Now lock back in and finish the day right."}]
             save_data(data)
             st.rerun()
@@ -1794,13 +1796,14 @@ with tab_coach:
     cols = [pc1, pc2, pc3, pc4]
     for col, prompt in zip(cols, prompts):
         with col:
-            if st.button(prompt):
+            if st.button(prompt, disabled=not can_edit):
                 data["coach_chat"].append({"role": "user", "text": prompt})
                 reply = fallback_coach_response(prompt, current_day, profile)
                 data["coach_chat"].append({"role": "ai", "text": reply})
                 save_data(data)
                 st.rerun()
 
-save_data(data)
+if can_edit:
+    save_data(data)
 
 st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)
