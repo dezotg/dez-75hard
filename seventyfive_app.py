@@ -144,6 +144,9 @@ def inject_styles():
         border: 1px solid rgba(255,255,255,0.08) !important;
         color: transparent !important;
         font-size: 0 !important;
+        line-height: 0 !important;
+        text-indent: -9999px !important;
+        white-space: nowrap !important;
         overflow: hidden !important;
     }
 
