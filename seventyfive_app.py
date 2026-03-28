@@ -139,6 +139,12 @@ def inject_styles():
         display: none !important;
     }
 
+    button[kind="header"] div[data-testid="stMarkdownContainer"],
+    button[kind="header"] p,
+    button[kind="header"] span:not([aria-hidden="true"]) {
+        display: none !important;
+    }
+
     .stApp {
         margin-top: 0 !important;
     }
