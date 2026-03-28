@@ -219,6 +219,30 @@ def inject_styles():
         border-radius: 14px !important;
     }
 
+    div[role="listbox"],
+    ul[role="listbox"],
+    [data-baseweb="popover"] ul,
+    [data-baseweb="menu"] ul {
+        background: #0b1120 !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+    }
+
+    div[role="option"],
+    li[role="option"],
+    [data-baseweb="menu"] li,
+    [data-baseweb="select"] [role="option"] {
+        background: #0b1120 !important;
+        color: #ffffff !important;
+    }
+
+    div[role="option"]:hover,
+    li[role="option"]:hover,
+    [data-baseweb="select"] [role="option"][aria-selected="true"] {
+        background: rgba(220, 38, 38, 0.22) !important;
+        color: #ffffff !important;
+    }
+
     .stCheckbox label {
         color: #ffffff !important;
     }
@@ -876,6 +900,17 @@ def load_data() -> Dict[str, Any]:
         data = default_data()
 
     base = default_data()
+
+    # Migrate older saves where date keys lived at the top level instead of under "days".
+    legacy_day_keys = [k for k in list(data.keys()) if isinstance(k, str) and len(k) == 10 and k[:4].isdigit() and k[4] == "-" and k[7] == "-"]
+    if legacy_day_keys:
+        migrated_days = {}
+        for key in legacy_day_keys:
+            raw = data.pop(key)
+            if isinstance(raw, dict):
+                migrated_days[key] = raw
+        data["days"] = {**migrated_days, **data.get("days", {})}
+
     data.setdefault("profile", base["profile"])
     data.setdefault("days", {})
     data.setdefault("coach_chat", base["coach_chat"])
@@ -894,6 +929,8 @@ def load_data() -> Dict[str, Any]:
 
         if "water" in clean and not clean.get("water_oz"):
             clean["water_oz"] = clean.get("water", 0)
+        if "read" in clean and not clean.get("pages_read"):
+            clean["pages_read"] = clean.get("read", 0)
         if "pages" in clean and not clean.get("pages_read"):
             clean["pages_read"] = clean.get("pages", 0)
         if "diet" in clean and not clean.get("diet_followed"):
@@ -904,6 +941,16 @@ def load_data() -> Dict[str, Any]:
             clean["workout_1_done"] = clean.get("workout1", False)
         if "workout2" in clean and not clean.get("workout_2_done"):
             clean["workout_2_done"] = clean.get("workout2", False)
+        if clean.get("outdoor"):
+            if clean.get("workout_1_done") and not clean.get("workout_1_location"):
+                clean["workout_1_location"] = "Outdoor"
+            elif clean.get("workout_2_done") and not clean.get("workout_2_location"):
+                clean["workout_2_location"] = "Outdoor"
+        if "tasks" in clean and not clean.get("discipline_score"):
+            try:
+                clean["discipline_score"] = int(clean.get("tasks", 0))
+            except Exception:
+                pass
 
         clean["water"] = clean.get("water_oz", 0)
         clean["pages"] = clean.get("pages_read", 0)
@@ -993,8 +1040,20 @@ def challenge_day_label(profile: Dict[str, Any], d: date) -> str:
 
 
 def current_streak(data: Dict[str, Any]) -> int:
+    available_dates = []
+    for key in data.get("days", {}).keys():
+        try:
+            d = datetime.strptime(key, "%Y-%m-%d").date()
+        except Exception:
+            continue
+        if d <= date.today():
+            available_dates.append(d)
+
+    if not available_dates:
+        return 0
+
     streak = 0
-    cursor = date.today()
+    cursor = max(available_dates)
     while True:
         key = str(cursor)
         if key not in data["days"]:
@@ -1786,22 +1845,19 @@ with tab_coach:
             st.rerun()
 
     st.markdown("### Quick Coach Prompts")
-    pc1, pc2, pc3, pc4 = st.columns(4)
     prompts = [
         "How am I doing today?",
         "What do I have left?",
         "Give me tough motivation",
         "What should I do next right now?",
     ]
-    cols = [pc1, pc2, pc3, pc4]
-    for col, prompt in zip(cols, prompts):
-        with col:
-            if st.button(prompt, disabled=not can_edit):
-                data["coach_chat"].append({"role": "user", "text": prompt})
-                reply = fallback_coach_response(prompt, current_day, profile)
-                data["coach_chat"].append({"role": "ai", "text": reply})
-                save_data(data)
-                st.rerun()
+    for idx, prompt in enumerate(prompts):
+        if st.button(prompt, key=f"coach_prompt_{idx}", disabled=not can_edit, use_container_width=True):
+            data["coach_chat"].append({"role": "user", "text": prompt})
+            reply = fallback_coach_response(prompt, current_day, profile)
+            data["coach_chat"].append({"role": "ai", "text": reply})
+            save_data(data)
+            st.rerun()
 
 if can_edit:
     save_data(data)
