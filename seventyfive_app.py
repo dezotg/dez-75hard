@@ -4,6 +4,7 @@ import os
 import calendar
 import random
 import base64
+from html import escape
 from datetime import date, datetime, timedelta
 from typing import Dict, Any
 
@@ -21,9 +22,10 @@ IMG_DIR = "images"
 
 HERO_IMG = os.path.join(IMG_DIR, "hero.jpg")
 WORKOUT_IMG = os.path.join(IMG_DIR, "workout.jpg")
-PROGRESS_IMG = HERO_IMG
+PROGRESS_IMG = os.path.join(IMG_DIR, "progress.jpg")
 COMMUNITY_IMG = os.path.join(IMG_DIR, "community.jpg")
 COACH_IMG = os.path.join(IMG_DIR, "coach.jpg")
+MISSION_NATURE_IMG = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80"
 
 
 # =========================================================
@@ -40,10 +42,13 @@ def image_to_data_uri(path: str) -> str:
     return f"data:image/{ext};base64,{encoded}"
 
 
-def background_style(image_path: str, overlay: str) -> str:
+def background_style(image_path: str, overlay: str, size: str = "cover", position: str = "center 28%") -> str:
+    if image_path.startswith("http://") or image_path.startswith("https://"):
+        return f"background: {overlay}, url('{image_path}'); background-size: {size}; background-position: {position}; background-repeat: no-repeat;"
+
     uri = image_to_data_uri(image_path)
     if uri:
-        return f"background: {overlay}, url('{uri}'); background-size: cover; background-position: center;"
+        return f"background: {overlay}, url('{uri}'); background-size: {size}; background-position: {position}; background-repeat: no-repeat;"
     return f"background: {overlay};"
 
 
@@ -53,45 +58,121 @@ def background_style(image_path: str, overlay: str) -> str:
 def inject_styles():
     st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
     :root {
-        --bg: #05070d;
-        --bg2: #0a0d14;
-        --panel: #0f131d;
-        --panel2: #151b28;
+        --bg: #0b0e14;
+        --bg2: #171c26;
+        --panel: rgba(20, 25, 36, 0.82);
+        --panel2: rgba(29, 36, 50, 0.88);
         --text: #f8fafc;
-        --muted: #cbd5e1;
+        --muted: #d2dceb;
         --soft: #94a3b8;
-        --red: #b91c1c;
+        --red: #991b1b;
         --red2: #dc2626;
-        --red3: #ef4444;
+        --red3: #fb7185;
         --line: rgba(255,255,255,0.08);
     }
 
-    html, body, [class*="css"] {
-        font-family: Inter, system-ui, sans-serif;
+    html, body, [class*="css"], [data-testid="stAppViewContainer"] * {
+        font-family: "Manrope", "Segoe UI", sans-serif;
+    }
+
+    /* Keep Streamlit/Material icon ligatures from rendering as plain text. */
+    .material-icons,
+    .material-icons-round,
+    .material-icons-outlined,
+    .material-symbols-rounded,
+    .material-symbols-outlined,
+    [class*="material-symbols"],
+    [data-testid="stSidebar"] button span[aria-hidden="true"] {
+        font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
     }
 
     .stApp {
         background:
-            radial-gradient(circle at 15% 12%, rgba(185,28,28,0.16), transparent 22%),
-            radial-gradient(circle at 82% 14%, rgba(239,68,68,0.12), transparent 20%),
-            linear-gradient(180deg, #03060b 0%, #090d14 50%, #0c1018 100%);
+            radial-gradient(circle at 12% 10%, rgba(220,38,38,0.16), transparent 26%),
+            radial-gradient(circle at 88% 8%, rgba(251,113,133,0.12), transparent 24%),
+            radial-gradient(circle at 50% 100%, rgba(251,191,36,0.08), transparent 28%),
+            linear-gradient(180deg, #0a0d13 0%, #121722 44%, #1a2130 100%);
         color: var(--text) !important;
     }
 
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 300px;
+        width: 72px;
+        height: 100vh;
+        pointer-events: none;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.00) 20%, rgba(255,255,255,0.00) 80%, rgba(255,255,255,0.04)),
+            linear-gradient(180deg, rgba(153,27,27,0.18), rgba(10,13,19,0.00) 30%, rgba(10,13,19,0.00) 70%, rgba(59,130,246,0.10)),
+            repeating-linear-gradient(180deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 16px);
+        border-left: 1px solid rgba(255,255,255,0.05);
+        border-right: 1px solid rgba(255,255,255,0.03);
+        opacity: 0.42;
+        z-index: 0;
+    }
+
     .block-container {
-        max-width: 1500px;
-        padding-top: 1rem;
-        padding-bottom: 2rem;
+        max-width: 1480px;
+        padding-top: 1.15rem;
+        padding-bottom: 2.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarHeader"],
+    section[data-testid="stSidebar"] > div:first-child > div:first-child > button,
+    section[data-testid="stSidebar"] button[kind="header"],
+    section[data-testid="stSidebar"] [aria-label*="sidebar"],
+    section[data-testid="stSidebar"] [title*="sidebar"] {
+        display: none !important;
+    }
+
+    .stApp {
+        margin-top: 0 !important;
     }
 
     h1, h2, h3, h4, h5, h6, p, div, span, label, li {
         color: var(--text) !important;
     }
 
+    h1, h2, h3, h4, h5, h6,
+    .hero-title,
+    .feature-title,
+    .section-title,
+    .stat-value,
+    .brand-left {
+        font-family: "Archivo Expanded", "Arial Black", sans-serif !important;
+    }
+
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #090d16 0%, #101624 100%) !important;
+        background:
+            radial-gradient(circle at top, rgba(220,38,38,0.14), transparent 34%),
+            linear-gradient(180deg, #121723 0%, #1b2230 100%) !important;
         border-right: 1px solid rgba(255,255,255,0.08) !important;
+        min-width: 300px !important;
+        width: 300px !important;
+    }
+
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 300px !important;
+        width: 300px !important;
+        margin-left: 0 !important;
+        transform: none !important;
     }
 
     [data-testid="stSidebar"] * {
@@ -110,13 +191,13 @@ def inject_styles():
     [data-testid="stSidebar"] .stNumberInput input,
     [data-testid="stSidebar"] .stDateInput input,
     [data-testid="stSidebar"] .stTextArea textarea {
-        background: #0b1120 !important;
+        background: rgba(5, 10, 19, 0.96) !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
         caret-color: #ffffff !important;
         border: 1px solid #334155 !important;
         border-radius: 14px !important;
-        box-shadow: none !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
     }
 
     .stTextInput input::placeholder,
@@ -131,7 +212,7 @@ def inject_styles():
     .stSelectbox div[data-baseweb="select"] > div,
     .stMultiSelect div[data-baseweb="select"] > div,
     [data-testid="stSidebar"] div[data-baseweb="select"] > div {
-        background: #0b1120 !important;
+        background: rgba(5, 10, 19, 0.96) !important;
         color: #ffffff !important;
         border: 1px solid #334155 !important;
         border-radius: 14px !important;
@@ -141,13 +222,55 @@ def inject_styles():
         color: #ffffff !important;
     }
 
+    details[data-testid="stExpander"] {
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 14px !important;
+        background: rgba(255,255,255,0.03) !important;
+        overflow: hidden;
+    }
+
+    details[data-testid="stExpander"] summary {
+        padding: 0.9rem 1rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+    }
+
+    details[data-testid="stExpander"] summary:hover {
+        background: rgba(255,255,255,0.03) !important;
+    }
+
+    details[data-testid="stExpander"] summary svg {
+        fill: #fca5a5 !important;
+    }
+
+    [data-testid="stTabs"] {
+        margin-top: 0.75rem;
+    }
+
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.06);
+        padding: 0.45rem;
+        border-radius: 22px;
+        margin-bottom: 1.15rem;
+        overflow-x: auto;
+    }
+
     button[data-baseweb="tab"] {
         color: #dbe3ef !important;
         font-weight: 800 !important;
+        border-radius: 16px !important;
+        padding: 0.75rem 1rem !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
+        background: linear-gradient(135deg, rgba(153,27,27,0.95), rgba(220,38,38,0.95)) !important;
+        border-color: rgba(255,255,255,0.09) !important;
+        box-shadow: 0 10px 24px rgba(153,27,27,0.28) !important;
     }
 
     .stButton > button,
@@ -157,14 +280,24 @@ def inject_styles():
         border: none !important;
         border-radius: 14px !important;
         font-weight: 800 !important;
+        min-height: 2.9rem !important;
         box-shadow: 0 12px 28px rgba(185,28,28,0.24) !important;
+    }
+
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #dc2626 0%, #fb7185 100%) !important;
+    }
+
+    .stProgress > div {
+        background: rgba(255,255,255,0.07) !important;
+        border-radius: 999px !important;
     }
 
     .top-brand {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 0.8rem;
+        margin-bottom: 1rem;
     }
 
     .brand-left {
@@ -185,15 +318,30 @@ def inject_styles():
     .hero {
         position: relative;
         overflow: hidden;
-        border-radius: 30px;
-        min-height: 460px;
-        padding: 2.4rem 2.4rem 2rem 2.4rem;
+        border-radius: 32px;
+        min-height: 490px;
+        padding: 2.7rem 2.7rem 2.2rem 2.7rem;
         border: 1px solid rgba(255,255,255,0.10);
-        box-shadow: 0 24px 60px rgba(0,0,0,0.30);
-        margin-bottom: 1rem;
+        box-shadow: 0 28px 70px rgba(0,0,0,0.34);
+        margin-bottom: 1.1rem;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
+    }
+
+    .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.55)),
+            linear-gradient(120deg, rgba(255,255,255,0.10), transparent 32%);
+        pointer-events: none;
+    }
+
+    .hero > * {
+        position: relative;
+        z-index: 1;
     }
 
     .hero-eyebrow {
@@ -206,47 +354,48 @@ def inject_styles():
     }
 
     .hero-title {
-        font-size: 4.1rem;
-        line-height: 0.95;
+        font-size: 4.3rem;
+        line-height: 0.9;
         font-weight: 900;
         letter-spacing: -0.05em;
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.9rem;
         color: #ffffff !important;
-        max-width: 760px;
+        max-width: 820px;
     }
 
     .hero-sub {
         color: #e7edf8 !important;
         font-size: 1.08rem;
-        max-width: 760px;
-        margin-bottom: 1rem;
+        max-width: 720px;
+        margin-bottom: 1.2rem;
     }
 
     .pill-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.55rem;
+        gap: 0.6rem;
     }
 
     .pill {
         display: inline-block;
-        padding: 0.5rem 0.82rem;
+        padding: 0.58rem 0.88rem;
         border-radius: 999px;
         background: rgba(255,255,255,0.10);
-        border: 1px solid rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.12);
         color: #ffffff !important;
-        font-size: 0.88rem;
+        font-size: 0.84rem;
         font-weight: 800;
+        backdrop-filter: blur(8px);
     }
 
     .glass-card {
-        border-radius: 24px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+        border-radius: 26px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
         border: 1px solid rgba(255,255,255,0.08);
-        padding: 1rem 1rem;
+        padding: 1.1rem 1.1rem;
         margin-bottom: 1rem;
-        box-shadow: 0 14px 36px rgba(0,0,0,0.18);
-        backdrop-filter: blur(8px);
+        box-shadow: 0 18px 42px rgba(0,0,0,0.20);
+        backdrop-filter: blur(10px);
     }
 
     .section-kicker {
@@ -260,7 +409,7 @@ def inject_styles():
 
     .section-title {
         color: #ffffff !important;
-        font-size: 1.5rem;
+        font-size: 1.42rem;
         font-weight: 900;
         letter-spacing: -0.02em;
         margin-bottom: 0.35rem;
@@ -273,12 +422,12 @@ def inject_styles():
 
     .stat-card {
         border-radius: 24px;
-        padding: 1.1rem 1rem 0.95rem 1rem;
+        padding: 1.2rem 1.05rem 1rem 1.05rem;
         min-height: 145px;
         background:
-            linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+            linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
         border: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0 14px 36px rgba(0,0,0,0.18);
+        box-shadow: 0 18px 40px rgba(0,0,0,0.18);
     }
 
     .stat-label {
@@ -304,18 +453,50 @@ def inject_styles():
     .feature-banner {
         position: relative;
         overflow: hidden;
-        border-radius: 26px;
-        min-height: 280px;
-        padding: 1.6rem;
+        border-radius: 28px;
+        min-height: 360px;
+        padding: 1.5rem;
         border: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0 16px 40px rgba(0,0,0,0.22);
+        box-shadow: 0 18px 48px rgba(0,0,0,0.24);
         display: flex;
         flex-direction: column;
-    justify-content: center;
-align-items: center;
-text-align: center;
         margin-bottom: 1rem;
-overflow: hidden;
+    }
+
+    .feature-banner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.10)),
+            linear-gradient(90deg, rgba(5,7,11,0.28) 0%, rgba(5,7,11,0.10) 24%, rgba(5,7,11,0.00) 52%);
+        pointer-events: none;
+    }
+
+    .feature-banner > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .feature-copy {
+        position: absolute;
+        left: 56%;
+        top: 0.35rem;
+        transform: translateX(-50%);
+        width: min(320px, 40%);
+        padding: 0.72rem 0.8rem;
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(7,10,16,0.56), rgba(18,24,35,0.30));
+        border: 1px solid rgba(255,255,255,0.07);
+        box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+        backdrop-filter: blur(6px);
+    }
+
+    .feature-copy.bottom-left {
+        left: 0.7rem;
+        top: auto;
+        bottom: 0.7rem;
+        transform: none;
     }
 
     .feature-banner.red-block {
@@ -324,22 +505,22 @@ overflow: hidden;
     }
 
     .feature-title {
-        font-size: 2.1rem;
+        font-size: 1.28rem;
         line-height: 1.0;
         font-weight: 900;
         letter-spacing: -0.04em;
-        margin-bottom: 0.65rem;
+        margin-bottom: 0.32rem;
     }
 
     .feature-text {
-        font-size: 1rem;
+        font-size: 0.8rem;
         color: #edf2f8 !important;
-        max-width: 580px;
+        max-width: 300px;
     }
 
     .mini-banner {
         border-radius: 22px;
-        min-height: 180px;
+        min-height: 190px;
         padding: 1.2rem;
         border: 1px solid rgba(255,255,255,0.08);
         box-shadow: 0 14px 34px rgba(0,0,0,0.20);
@@ -398,7 +579,125 @@ overflow: hidden;
         color: #b8c7da !important;
         text-align: center;
         font-size: 0.84rem;
-        margin-top: 1rem;
+        margin-top: 1.3rem;
+    }
+
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+        margin-top: 0.85rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .status-item {
+        padding: 0.9rem 0.95rem;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .status-item.done {
+        background: linear-gradient(180deg, rgba(22,163,74,0.18), rgba(34,197,94,0.08));
+        border-color: rgba(74,222,128,0.18);
+    }
+
+    .status-item.open {
+        background: linear-gradient(180deg, rgba(220,38,38,0.16), rgba(255,255,255,0.03));
+        border-color: rgba(248,113,113,0.16);
+    }
+
+    .status-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #d7e1ef !important;
+        margin-bottom: 0.35rem;
+        font-weight: 800;
+    }
+
+    .status-value {
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+
+    .list-card {
+        border-radius: 22px;
+        padding: 1rem 1.05rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+        margin-bottom: 1rem;
+    }
+
+    .list-card ul {
+        margin: 0.5rem 0 0 1.1rem;
+        padding: 0;
+    }
+
+    .list-card li {
+        margin-bottom: 0.5rem;
+    }
+
+    .insight-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin: 0.8rem 0 1rem 0;
+    }
+
+    .insight-chip {
+        border-radius: 18px;
+        padding: 0.9rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .insight-label {
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #fca5a5 !important;
+        font-weight: 900;
+        margin-bottom: 0.35rem;
+    }
+
+    .insight-value {
+        font-size: 1.12rem;
+        font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+        .hero {
+            min-height: 420px;
+            padding: 2rem 1.4rem 1.5rem 1.4rem;
+        }
+
+        .hero-title {
+            font-size: 2.75rem;
+        }
+
+        .status-grid,
+        .insight-strip {
+            grid-template-columns: 1fr;
+        }
+
+        .feature-copy {
+            width: min(100%, 100%);
+            left: 56%;
+            right: auto;
+            top: 0.35rem;
+            bottom: auto;
+            transform: translateX(-50%);
+        }
+
+        .feature-copy.bottom-left {
+            left: 0.7rem;
+            right: 0.7rem;
+            top: auto;
+            bottom: 0.7rem;
+            transform: none;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -587,6 +886,11 @@ def day_number(profile: Dict[str, Any], d: date) -> int:
     return (d - start).days + 1
 
 
+def challenge_day_label(profile: Dict[str, Any], d: date) -> str:
+    num = day_number(profile, d)
+    return f"Day {num}" if num >= 1 else "Pre-start"
+
+
 def current_streak(data: Dict[str, Any]) -> int:
     streak = 0
     cursor = date.today()
@@ -633,6 +937,43 @@ def quote() -> str:
         "Momentum loves people who keep showing up.",
     ]
     return random.choice(quotes)
+
+
+def render_status_grid(items):
+    blocks = []
+    for title, value, done in items:
+        state_class = "done" if done else "open"
+        blocks.append(
+            f'<div class="status-item {state_class}">'
+            f'<div class="status-title">{escape(str(title))}</div>'
+            f'<div class="status-value">{escape(str(value))}</div>'
+            f'</div>'
+        )
+    st.markdown(f"<div class='status-grid'>{''.join(blocks)}</div>", unsafe_allow_html=True)
+
+
+def render_list_card(title: str, items, empty_text: str):
+    if items:
+        body = "".join(f"<li>{escape(str(item))}</li>" for item in items)
+        content = f"<ul>{body}</ul>"
+    else:
+        content = f"<div class='small-muted'>{escape(empty_text)}</div>"
+    st.markdown(
+        f'<div class="list-card"><div class="section-kicker">{escape(title)}</div>{content}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_insight_strip(items):
+    cards = []
+    for label, value in items:
+        cards.append(
+            f'<div class="insight-chip">'
+            f'<div class="insight-label">{escape(str(label))}</div>'
+            f'<div class="insight-value">{escape(str(value))}</div>'
+            f'</div>'
+        )
+    st.markdown(f"<div class='insight-strip'>{''.join(cards)}</div>", unsafe_allow_html=True)
 
 
 def stat_card(label: str, value: str, sub: str):
@@ -695,13 +1036,15 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
     )
 
 
-def feature_banner(title: str, text: str, image_path: str = "", red_block: bool = False):
+def feature_banner(title: str, text: str, image_path: str = "", red_block: bool = False, bg_size: str = "cover", bg_position: str = "center 28%", copy_class: str = ""):
     if red_block:
         st.markdown(
             f"""
             <div class="feature-banner red-block">
-                <div class="feature-title">{title}</div>
-                <div class="feature-text">{text}</div>
+                <div class="feature-copy {copy_class}">
+                    <div class="feature-title">{title}</div>
+                    <div class="feature-text">{text}</div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -709,13 +1052,17 @@ def feature_banner(title: str, text: str, image_path: str = "", red_block: bool 
     else:
         style = background_style(
             image_path,
-            "linear-gradient(100deg, rgba(0,0,0,0.70), rgba(0,0,0,0.26))"
+            "linear-gradient(100deg, rgba(0,0,0,0.28), rgba(0,0,0,0.08))",
+            size=bg_size,
+            position=bg_position,
         )
         st.markdown(
             f"""
             <div class="feature-banner" style="{style}">
-                <div class="feature-title">{title}</div>
-                <div class="feature-text">{text}</div>
+                <div class="feature-copy {copy_class}">
+                    <div class="feature-title">{title}</div>
+                    <div class="feature-text">{text}</div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -725,7 +1072,7 @@ def feature_banner(title: str, text: str, image_path: str = "", red_block: bool 
 def mini_banner(title: str, text: str, image_path: str):
     style = background_style(
         image_path,
-        "linear-gradient(100deg, rgba(0,0,0,0.72), rgba(0,0,0,0.32))"
+        "linear-gradient(100deg, rgba(0,0,0,0.24), rgba(0,0,0,0.08))"
     )
     st.markdown(
         f"""
@@ -877,13 +1224,13 @@ with st.sidebar:
         )
     )
 
-    with st.expander("Goal settings"):
-        profile["daily_water_goal_oz"] = st.number_input("Water goal (oz)", min_value=32, max_value=256, value=int(profile.get("daily_water_goal_oz", 128)), step=8)
-        profile["daily_pages_goal"] = st.number_input("Pages goal", min_value=1, max_value=100, value=int(profile.get("daily_pages_goal", 10)), step=1)
-        profile["target_calories"] = st.number_input("Calories target", min_value=1000, max_value=6000, value=int(profile.get("target_calories", 2393)), step=10)
-        profile["target_protein"] = st.number_input("Protein target", min_value=50, max_value=400, value=int(profile.get("target_protein", 207)), step=1)
-        profile["target_carbs"] = st.number_input("Carbs target", min_value=0, max_value=600, value=int(profile.get("target_carbs", 241)), step=1)
-        profile["target_fats"] = st.number_input("Fats target", min_value=0, max_value=200, value=int(profile.get("target_fats", 66)), step=1)
+    st.markdown("### Goal Settings")
+    profile["daily_water_goal_oz"] = st.number_input("Water goal (oz)", min_value=32, max_value=256, value=int(profile.get("daily_water_goal_oz", 128)), step=8)
+    profile["daily_pages_goal"] = st.number_input("Pages goal", min_value=1, max_value=100, value=int(profile.get("daily_pages_goal", 10)), step=1)
+    profile["target_calories"] = st.number_input("Calories target", min_value=1000, max_value=6000, value=int(profile.get("target_calories", 2393)), step=10)
+    profile["target_protein"] = st.number_input("Protein target", min_value=50, max_value=400, value=int(profile.get("target_protein", 207)), step=1)
+    profile["target_carbs"] = st.number_input("Carbs target", min_value=0, max_value=600, value=int(profile.get("target_carbs", 241)), step=1)
+    profile["target_fats"] = st.number_input("Fats target", min_value=0, max_value=200, value=int(profile.get("target_fats", 66)), step=1)
 
 save_data(data)
 
@@ -924,20 +1271,25 @@ with tab_home:
     b1, b2 = st.columns([1, 1.25])
     with b1:
         feature_banner(
-            "The workout that works out well.",
+            "Built in the work. Proven by the reps.",
             "Dez’s training system now feels more like a premium fitness brand — stronger visuals, sharper structure, and cleaner momentum.",
-            red_block=True,
+            image_path=WORKOUT_IMG if os.path.exists(WORKOUT_IMG) else HERO_IMG,
+            bg_size="cover",
+            bg_position="center center",
+            copy_class="bottom-left",
         )
     with b2:
         feature_banner(
-            "People. Motion. Intensity.",
-            "Use real workout imagery in the hero and feature banners so the app feels alive, premium, and built around action instead of plain widgets.",
+            "No excuses. Just work.",
+            "Stay locked in and let the results follow.",
             image_path=COMMUNITY_IMG if os.path.exists(COMMUNITY_IMG) else WORKOUT_IMG,
+            bg_size="cover",
+            bg_position="center 34%",
         )
 
     m1, m2, m3 = st.columns(3)
     with m1:
-        mini_banner("Today’s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", WORKOUT_IMG)
+        mini_banner("Today’s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
     with m2:
         mini_banner("Progress Zone", "Daily consistency compounds into visible change.", PROGRESS_IMG)
     with m3:
@@ -950,6 +1302,13 @@ with tab_home:
 
         water_goal = profile.get("daily_water_goal_oz", 128)
         pages_goal = profile.get("daily_pages_goal", 10)
+        workouts_done = int(current_day.get("workout_1_done", False)) + int(current_day.get("workout_2_done", False))
+
+        render_insight_strip([
+            ("Hydration", f"{current_day.get('water_oz', 0)} / {water_goal} oz"),
+            ("Reading", f"{current_day.get('pages_read', 0)} / {pages_goal} pages"),
+            ("Workouts", f"{workouts_done} / 2 complete"),
+        ])
 
         st.markdown("**Water Progress**")
         st.progress(min(current_day.get("water_oz", 0) / max(water_goal, 1), 1.0), text=f"{current_day.get('water_oz', 0)} / {water_goal} oz")
@@ -957,7 +1316,6 @@ with tab_home:
         st.markdown("**Reading Progress**")
         st.progress(min(current_day.get("pages_read", 0) / max(pages_goal, 1), 1.0), text=f"{current_day.get('pages_read', 0)} / {pages_goal} pages")
 
-        workouts_done = int(current_day.get("workout_1_done", False)) + int(current_day.get("workout_2_done", False))
         st.markdown("**Workout Completion**")
         st.progress(workouts_done / 2, text=f"{workouts_done} / 2 workouts completed")
 
@@ -969,6 +1327,15 @@ with tab_home:
             if current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
             else "⬜ Outdoor workout not logged yet"
         )
+
+        outdoor_logged = current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
+        complete_today = day_complete(current_day, profile)
+        render_status_grid([
+            ("Diet", "Locked in" if current_day.get("diet_followed") else "Still open", bool(current_day.get("diet_followed"))),
+            ("Progress Photo", "Done" if current_day.get("progress_picture") else "Still open", bool(current_day.get("progress_picture"))),
+            ("Outdoor Session", "Logged" if outdoor_logged else "Not logged yet", outdoor_logged),
+            ("Day Finish", "Clean finish" if complete_today else "Still building", complete_today),
+        ])
 
     with right:
         section_card("Focus", "Dez’s Command Panel", "Use this as your quick daily lock-in zone.")
@@ -987,12 +1354,7 @@ with tab_home:
         if not current_day.get("workout_2_done"):
             remaining.append("workout 2")
 
-        st.markdown("**Remaining items**")
-        if remaining:
-            for item in remaining:
-                st.markdown(f"- {item}")
-        else:
-            st.markdown("- Nothing left. Clean finish.")
+        render_list_card("Remaining Items", remaining, "Nothing left. Clean finish.")
 
         st.markdown("**Saved workout**")
         sw = current_day.get("saved_workout", {})
@@ -1215,11 +1577,13 @@ with tab_calendar:
                     d = date(year, month, n)
                     dday = get_day(data, d)
                     sc = calc_score(dday, profile)
+                    challenge_day = challenge_day_label(profile, d)
                     label = "✅ Complete" if day_complete(dday, profile) else "⚡ Strong" if sc >= 70 else "• Started" if sc > 0 else "— Empty"
                     st.markdown(
                         f"""
                         <div class='calendar-box'>
                             <strong>{n}</strong><br>
+                            <span class='small-muted'>{challenge_day}</span><br>
                             <span class='small-muted'>{label}</span><br>
                             <span class='small-muted'>Score: {sc}</span><br>
                             <span class='small-muted'>Water: {dday.get("water_oz", 0)} oz</span>
@@ -1243,6 +1607,7 @@ with tab_report:
         dday = get_day(data, d)
         rows.append({
             "Date": str(d),
+            "Day": challenge_day_label(profile, d),
             "Score": calc_score(dday, profile),
             "Complete": "Yes" if day_complete(dday, profile) else "No",
             "Water": dday.get("water_oz", 0),
@@ -1291,12 +1656,6 @@ with tab_coach:
             "Stay coached.",
             "Use this area like a locker-room accountability tool when your day starts drifting.",
             image_path=COACH_IMG if os.path.exists(COACH_IMG) else HERO_IMG,
-        )
-    with top2:
-        feature_banner(
-            "Dez Mode",
-            "Keep the standard high. The app should feel like it belongs to you.",
-            red_block=True,
         )
 
     for msg in data.get("coach_chat", []):
