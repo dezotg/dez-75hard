@@ -1,0 +1,1344 @@
+import streamlit as st
+import json
+import os
+import calendar
+import random
+import base64
+from datetime import date, datetime, timedelta
+from typing import Dict, Any
+
+import pandas as pd
+
+st.set_page_config(
+    page_title="Dez 75 Hard Command Center",
+    page_icon="🔥",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+DATA_FILE = "seventyfive_data.json"
+IMG_DIR = "images"
+
+HERO_IMG = os.path.join(IMG_DIR, "hero.jpg")
+WORKOUT_IMG = os.path.join(IMG_DIR, "workout.jpg")
+PROGRESS_IMG = HERO_IMG
+COMMUNITY_IMG = os.path.join(IMG_DIR, "community.jpg")
+COACH_IMG = os.path.join(IMG_DIR, "coach.jpg")
+
+
+# =========================================================
+# IMAGE HELPERS
+# =========================================================
+def image_to_data_uri(path: str) -> str:
+    if not os.path.exists(path):
+        return ""
+    ext = os.path.splitext(path)[1].lower().replace(".", "")
+    if ext == "jpg":
+        ext = "jpeg"
+    with open(path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode("utf-8")
+    return f"data:image/{ext};base64,{encoded}"
+
+
+def background_style(image_path: str, overlay: str) -> str:
+    uri = image_to_data_uri(image_path)
+    if uri:
+        return f"background: {overlay}, url('{uri}'); background-size: cover; background-position: center;"
+    return f"background: {overlay};"
+
+
+# =========================================================
+# STYLES
+# =========================================================
+def inject_styles():
+    st.markdown("""
+    <style>
+    :root {
+        --bg: #05070d;
+        --bg2: #0a0d14;
+        --panel: #0f131d;
+        --panel2: #151b28;
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --soft: #94a3b8;
+        --red: #b91c1c;
+        --red2: #dc2626;
+        --red3: #ef4444;
+        --line: rgba(255,255,255,0.08);
+    }
+
+    html, body, [class*="css"] {
+        font-family: Inter, system-ui, sans-serif;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(circle at 15% 12%, rgba(185,28,28,0.16), transparent 22%),
+            radial-gradient(circle at 82% 14%, rgba(239,68,68,0.12), transparent 20%),
+            linear-gradient(180deg, #03060b 0%, #090d14 50%, #0c1018 100%);
+        color: var(--text) !important;
+    }
+
+    .block-container {
+        max-width: 1500px;
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+
+    h1, h2, h3, h4, h5, h6, p, div, span, label, li {
+        color: var(--text) !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #090d16 0%, #101624 100%) !important;
+        border-right: 1px solid rgba(255,255,255,0.08) !important;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #ffffff !important;
+    }
+
+    .stTextInput input,
+    .stNumberInput input,
+    .stDateInput input,
+    .stTextArea textarea,
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stDateInput > div > div input,
+    .stTextArea textarea,
+    [data-testid="stSidebar"] .stTextInput input,
+    [data-testid="stSidebar"] .stNumberInput input,
+    [data-testid="stSidebar"] .stDateInput input,
+    [data-testid="stSidebar"] .stTextArea textarea {
+        background: #0b1120 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        caret-color: #ffffff !important;
+        border: 1px solid #334155 !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+    }
+
+    .stTextInput input::placeholder,
+    .stNumberInput input::placeholder,
+    .stDateInput input::placeholder,
+    .stTextArea textarea::placeholder {
+        color: #94a3b8 !important;
+        -webkit-text-fill-color: #94a3b8 !important;
+        opacity: 1 !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"] > div,
+    .stMultiSelect div[data-baseweb="select"] > div,
+    [data-testid="stSidebar"] div[data-baseweb="select"] > div {
+        background: #0b1120 !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+        border-radius: 14px !important;
+    }
+
+    .stCheckbox label {
+        color: #ffffff !important;
+    }
+
+    button[data-baseweb="tab"] {
+        color: #dbe3ef !important;
+        font-weight: 800 !important;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #ffffff !important;
+    }
+
+    .stButton > button,
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, var(--red), var(--red2)) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 14px !important;
+        font-weight: 800 !important;
+        box-shadow: 0 12px 28px rgba(185,28,28,0.24) !important;
+    }
+
+    .top-brand {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.8rem;
+    }
+
+    .brand-left {
+        font-size: 1.35rem;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        color: #ffffff !important;
+    }
+
+    .brand-right {
+        color: #fca5a5 !important;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+    }
+
+    .hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 30px;
+        min-height: 460px;
+        padding: 2.4rem 2.4rem 2rem 2.4rem;
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.30);
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    .hero-eyebrow {
+        color: #fecaca !important;
+        font-size: 0.82rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        margin-bottom: 0.6rem;
+    }
+
+    .hero-title {
+        font-size: 4.1rem;
+        line-height: 0.95;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        margin-bottom: 0.8rem;
+        color: #ffffff !important;
+        max-width: 760px;
+    }
+
+    .hero-sub {
+        color: #e7edf8 !important;
+        font-size: 1.08rem;
+        max-width: 760px;
+        margin-bottom: 1rem;
+    }
+
+    .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+    }
+
+    .pill {
+        display: inline-block;
+        padding: 0.5rem 0.82rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.10);
+        color: #ffffff !important;
+        font-size: 0.88rem;
+        font-weight: 800;
+    }
+
+    .glass-card {
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+        border: 1px solid rgba(255,255,255,0.08);
+        padding: 1rem 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 14px 36px rgba(0,0,0,0.18);
+        backdrop-filter: blur(8px);
+    }
+
+    .section-kicker {
+        color: #fca5a5 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.78rem;
+        font-weight: 900;
+        margin-bottom: 0.45rem;
+    }
+
+    .section-title {
+        color: #ffffff !important;
+        font-size: 1.5rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.35rem;
+    }
+
+    .section-sub {
+        color: #cbd5e1 !important;
+        font-size: 0.96rem;
+    }
+
+    .stat-card {
+        border-radius: 24px;
+        padding: 1.1rem 1rem 0.95rem 1rem;
+        min-height: 145px;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 14px 36px rgba(0,0,0,0.18);
+    }
+
+    .stat-label {
+        color: #c9d5e6 !important;
+        font-size: 0.92rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .stat-value {
+        color: #ffffff !important;
+        font-size: 2.25rem;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+    }
+
+    .stat-sub {
+        color: #dce7f5 !important;
+        font-size: 0.92rem;
+        margin-top: 0.35rem;
+    }
+
+    .feature-banner {
+        position: relative;
+        overflow: hidden;
+        border-radius: 26px;
+        min-height: 280px;
+        padding: 1.6rem;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.22);
+        display: flex;
+        flex-direction: column;
+    justify-content: center;
+align-items: center;
+text-align: center;
+        margin-bottom: 1rem;
+overflow: hidden;
+    }
+
+    .feature-banner.red-block {
+        background: linear-gradient(135deg, #991b1b, #ef4444) !important;
+        color: #ffffff !important;
+    }
+
+    .feature-title {
+        font-size: 2.1rem;
+        line-height: 1.0;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        margin-bottom: 0.65rem;
+    }
+
+    .feature-text {
+        font-size: 1rem;
+        color: #edf2f8 !important;
+        max-width: 580px;
+    }
+
+    .mini-banner {
+        border-radius: 22px;
+        min-height: 180px;
+        padding: 1.2rem;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.20);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .coach-user {
+        background: rgba(185,28,28,.18);
+        border: 1px solid rgba(239,68,68,.34);
+        padding: 14px;
+        border-radius: 16px;
+        margin-bottom: 8px;
+    }
+
+    .coach-ai {
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.10);
+        padding: 14px;
+        border-radius: 16px;
+        margin-bottom: 8px;
+    }
+
+    .small-muted {
+        color: #cbd5e1 !important;
+        font-size: 0.88rem;
+    }
+
+    .calendar-box {
+        border-radius: 16px;
+        min-height: 92px;
+        padding: 0.6rem;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .calendar-empty {
+        border-radius: 16px;
+        min-height: 92px;
+        background: rgba(255,255,255,0.02);
+        border: 1px dashed rgba(255,255,255,0.04);
+    }
+
+    .calendar-head {
+        text-align: center;
+        font-size: 0.83rem;
+        color: #cbd5e1 !important;
+        font-weight: 900;
+        margin-bottom: 0.2rem;
+    }
+
+    .footer-note {
+        color: #b8c7da !important;
+        text-align: center;
+        font-size: 0.84rem;
+        margin-top: 1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# =========================================================
+# DATA
+# =========================================================
+def default_day() -> Dict[str, Any]:
+    return {
+        "water_oz": 0,
+        "pages_read": 0,
+        "diet_followed": False,
+        "progress_picture": False,
+        "workout_1_done": False,
+        "workout_1_type": "",
+        "workout_1_location": "",
+        "workout_1_minutes": 45,
+        "workout_2_done": False,
+        "workout_2_type": "",
+        "workout_2_location": "",
+        "workout_2_minutes": 45,
+        "notes": "",
+        "weight": None,
+        "calories": None,
+        "protein": None,
+        "carbs": None,
+        "fats": None,
+        "saved_workout": {},
+        "discipline_score": 0,
+        "water": 0,
+        "pages": 0,
+        "diet": False,
+        "photo": False,
+        "workout1": False,
+        "workout2": False,
+    }
+
+
+def default_data() -> Dict[str, Any]:
+    return {
+        "profile": {
+            "name": "Dez",
+            "start_date": str(date.today()),
+            "phase_name": "Built Different",
+            "daily_water_goal_oz": 128,
+            "daily_pages_goal": 10,
+            "target_calories": 2393,
+            "target_protein": 207,
+            "target_carbs": 241,
+            "target_fats": 66,
+        },
+        "days": {},
+        "coach_chat": [
+            {"role": "ai", "text": "Welcome back, Dez. Protect the streak and finish the day strong."}
+        ],
+    }
+
+
+def load_data() -> Dict[str, Any]:
+    if not os.path.exists(DATA_FILE):
+        data = default_data()
+        save_data(data)
+        return data
+
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        data = default_data()
+        save_data(data)
+        return data
+
+    if not isinstance(data, dict):
+        data = default_data()
+
+    base = default_data()
+    data.setdefault("profile", base["profile"])
+    data.setdefault("days", {})
+    data.setdefault("coach_chat", base["coach_chat"])
+
+    for k, v in base["profile"].items():
+        data["profile"].setdefault(k, v)
+
+    if not isinstance(data["days"], dict):
+        data["days"] = {}
+
+    fixed_days = {}
+    for day_key, raw in data["days"].items():
+        clean = default_day()
+        if isinstance(raw, dict):
+            clean.update(raw)
+
+        if "water" in clean and not clean.get("water_oz"):
+            clean["water_oz"] = clean.get("water", 0)
+        if "pages" in clean and not clean.get("pages_read"):
+            clean["pages_read"] = clean.get("pages", 0)
+        if "diet" in clean and not clean.get("diet_followed"):
+            clean["diet_followed"] = clean.get("diet", False)
+        if "photo" in clean and not clean.get("progress_picture"):
+            clean["progress_picture"] = clean.get("photo", False)
+        if "workout1" in clean and not clean.get("workout_1_done"):
+            clean["workout_1_done"] = clean.get("workout1", False)
+        if "workout2" in clean and not clean.get("workout_2_done"):
+            clean["workout_2_done"] = clean.get("workout2", False)
+
+        clean["water"] = clean.get("water_oz", 0)
+        clean["pages"] = clean.get("pages_read", 0)
+        clean["diet"] = clean.get("diet_followed", False)
+        clean["photo"] = clean.get("progress_picture", False)
+        clean["workout1"] = clean.get("workout_1_done", False)
+        clean["workout2"] = clean.get("workout_2_done", False)
+
+        fixed_days[day_key] = clean
+
+    data["days"] = fixed_days
+    return data
+
+
+def save_data(data: Dict[str, Any]):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def get_day(data: Dict[str, Any], selected_day: date) -> Dict[str, Any]:
+    key = str(selected_day)
+    if key not in data["days"]:
+        data["days"][key] = default_day()
+    else:
+        merged = default_day()
+        merged.update(data["days"][key])
+        data["days"][key] = merged
+
+    d = data["days"][key]
+    d["water"] = d.get("water_oz", 0)
+    d["pages"] = d.get("pages_read", 0)
+    d["diet"] = d.get("diet_followed", False)
+    d["photo"] = d.get("progress_picture", False)
+    d["workout1"] = d.get("workout_1_done", False)
+    d["workout2"] = d.get("workout_2_done", False)
+    return d
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+def calc_score(day: Dict[str, Any], profile: Dict[str, Any]) -> int:
+    score = 0
+    water_goal = profile.get("daily_water_goal_oz", 128)
+    pages_goal = profile.get("daily_pages_goal", 10)
+
+    score += 20 if day.get("water_oz", 0) >= water_goal else int((day.get("water_oz", 0) / max(water_goal, 1)) * 20)
+    score += 15 if day.get("pages_read", 0) >= pages_goal else int((day.get("pages_read", 0) / max(pages_goal, 1)) * 15)
+
+    if day.get("diet_followed"):
+        score += 20
+    if day.get("progress_picture"):
+        score += 10
+    if day.get("workout_1_done"):
+        score += 15
+    if day.get("workout_2_done"):
+        score += 15
+
+    if day.get("workout_1_location", "").lower() == "outdoor" or day.get("workout_2_location", "").lower() == "outdoor":
+        score += 5
+
+    return min(score, 100)
+
+
+def day_complete(day: Dict[str, Any], profile: Dict[str, Any]) -> bool:
+    return (
+        day.get("water_oz", 0) >= profile.get("daily_water_goal_oz", 128)
+        and day.get("pages_read", 0) >= profile.get("daily_pages_goal", 10)
+        and day.get("diet_followed", False)
+        and day.get("progress_picture", False)
+        and day.get("workout_1_done", False)
+        and day.get("workout_2_done", False)
+    )
+
+
+def day_number(profile: Dict[str, Any], d: date) -> int:
+    try:
+        start = datetime.strptime(profile.get("start_date", str(date.today())), "%Y-%m-%d").date()
+    except Exception:
+        start = date.today()
+    return (d - start).days + 1
+
+
+def current_streak(data: Dict[str, Any]) -> int:
+    streak = 0
+    cursor = date.today()
+    while True:
+        key = str(cursor)
+        if key not in data["days"]:
+            break
+        if day_complete(data["days"][key], data["profile"]):
+            streak += 1
+            cursor -= timedelta(days=1)
+        else:
+            break
+    return streak
+
+
+def best_streak(data: Dict[str, Any]) -> int:
+    if not data["days"]:
+        return 0
+
+    dates = sorted([datetime.strptime(k, "%Y-%m-%d").date() for k in data["days"].keys()])
+    best = 0
+    run = 0
+    prev = None
+
+    for d in dates:
+        if day_complete(data["days"][str(d)], data["profile"]):
+            if prev and d == prev + timedelta(days=1):
+                run += 1
+            else:
+                run = 1
+            best = max(best, run)
+        else:
+            run = 0
+        prev = d
+    return best
+
+
+def quote() -> str:
+    quotes = [
+        "Burn fat. Build discipline.",
+        "Every day finished clean is a vote for the man you want to become.",
+        "You do not need perfect. You need complete.",
+        "Hard days count more than easy days.",
+        "Momentum loves people who keep showing up.",
+    ]
+    return random.choice(quotes)
+
+
+def stat_card(label: str, value: str, sub: str):
+    st.markdown(
+        f"""
+        <div class="stat-card">
+            <div class="stat-label">{label}</div>
+            <div class="stat-value">{value}</div>
+            <div class="stat-sub">{sub}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section_card(kicker: str, title: str, sub: str):
+    st.markdown(
+        f"""
+        <div class="glass-card">
+            <div class="section-kicker">{kicker}</div>
+            <div class="section-title">{title}</div>
+            <div class="section-sub">{sub}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val: int):
+    style = background_style(
+        HERO_IMG,
+        "linear-gradient(100deg, rgba(0,0,0,0.74), rgba(0,0,0,0.28))"
+    )
+
+    st.markdown(
+        f"""
+        <div class="top-brand">
+            <div class="brand-left">🔥 Dez 75 Hard</div>
+            <div class="brand-right">Red Premium Edition</div>
+        </div>
+
+        <div class="hero" style="{style}">
+            <div class="hero-eyebrow">Dez Performance System</div>
+            <div class="hero-title">Burn Fat.<br>Build Muscle.<br>Stay Locked In.</div>
+            <div class="hero-sub">
+                Premium command center for Dez’s 75 Hard run — training, hydration, reading, nutrition, recovery, and streak protection.
+            </div>
+            <div class="pill-row">
+                <span class="pill">Day {day_number(profile, selected_day)}</span>
+                <span class="pill">{profile.get("phase_name", "Built Different")}</span>
+                <span class="pill">Score: {score_val}/100</span>
+                <span class="pill">Streak: {streak_val} days</span>
+                <span class="pill">Water Goal: {profile.get("daily_water_goal_oz", 128)} oz</span>
+                <span class="pill">Pages: {profile.get("daily_pages_goal", 10)}</span>
+            </div>
+            <div style="margin-top:1rem;color:#edf2f8;">{quote()}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def feature_banner(title: str, text: str, image_path: str = "", red_block: bool = False):
+    if red_block:
+        st.markdown(
+            f"""
+            <div class="feature-banner red-block">
+                <div class="feature-title">{title}</div>
+                <div class="feature-text">{text}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        style = background_style(
+            image_path,
+            "linear-gradient(100deg, rgba(0,0,0,0.70), rgba(0,0,0,0.26))"
+        )
+        st.markdown(
+            f"""
+            <div class="feature-banner" style="{style}">
+                <div class="feature-title">{title}</div>
+                <div class="feature-text">{text}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def mini_banner(title: str, text: str, image_path: str):
+    style = background_style(
+        image_path,
+        "linear-gradient(100deg, rgba(0,0,0,0.72), rgba(0,0,0,0.32))"
+    )
+    st.markdown(
+        f"""
+        <div class="mini-banner" style="{style}">
+            <div style="font-size:1.45rem;font-weight:900;letter-spacing:-0.03em;margin-bottom:0.4rem;">{title}</div>
+            <div class="small-muted">{text}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def fallback_coach_response(msg: str, day: Dict[str, Any], profile: Dict[str, Any]) -> str:
+    m = msg.lower()
+    water_left = max(profile.get("daily_water_goal_oz", 128) - day.get("water_oz", 0), 0)
+    pages_left = max(profile.get("daily_pages_goal", 10) - day.get("pages_read", 0), 0)
+    score_val = calc_score(day, profile)
+
+    if "date" in m or "today" in m:
+        return f"Today is {date.today().strftime('%A, %B %d, %Y')}."
+    if "how am i doing" in m or "score" in m or "status" in m:
+        return f"Dez, your discipline score is {score_val}/100. You have {water_left} oz water and {pages_left} pages left."
+    if "what do i have left" in m or "left" in m:
+        items = []
+        if water_left > 0:
+            items.append(f"{water_left} oz water")
+        if pages_left > 0:
+            items.append(f"{pages_left} pages")
+        if not day.get("diet_followed"):
+            items.append("diet confirmation")
+        if not day.get("progress_picture"):
+            items.append("progress photo")
+        if not day.get("workout_1_done"):
+            items.append("workout 1")
+        if not day.get("workout_2_done"):
+            items.append("workout 2")
+        if items:
+            return "You still have: " + ", ".join(items) + "."
+        return "You have nothing left. Finish clean."
+    if "motivation" in m or "tough" in m:
+        return "Do not negotiate with yourself, Dez. Finish the tasks, protect the streak, and earn the result."
+    if "workout" in m:
+        return "Train with intent. Pick one measurable win and beat it today."
+    return "Lock in. Finish your tasks. Protect the streak."
+
+
+def progress_df(data: Dict[str, Any]) -> pd.DataFrame:
+    rows = []
+    for k, d in sorted(data["days"].items()):
+        try:
+            dt = datetime.strptime(k, "%Y-%m-%d").date()
+        except Exception:
+            continue
+        rows.append({
+            "date": dt,
+            "water_oz": d.get("water_oz", 0),
+            "pages_read": d.get("pages_read", 0),
+            "weight": d.get("weight"),
+            "calories": d.get("calories"),
+            "protein": d.get("protein"),
+            "carbs": d.get("carbs"),
+            "fats": d.get("fats"),
+            "score": calc_score(d, data["profile"]),
+            "complete": 1 if day_complete(d, data["profile"]) else 0,
+        })
+    return pd.DataFrame(rows)
+
+
+EXERCISE_BANK = {
+    "Push": {
+        "Bodyweight": ["Push-ups - 4 x 15", "Pike push-ups - 4 x 10", "Bench dips - 4 x 12", "Tempo push-ups - 3 x 12"],
+        "Dumbbells": ["DB bench press - 4 x 10", "Incline DB press - 3 x 10", "Shoulder press - 4 x 8", "Lateral raises - 4 x 15"],
+        "Gym": ["Bench press - 4 x 6-8", "Incline press machine - 3 x 10", "Shoulder press machine - 3 x 8-10", "Rope pushdowns - 4 x 12"],
+    },
+    "Pull": {
+        "Bodyweight": ["Door rows - 4 x 10", "Supermans - 4 x 15", "Reverse snow angels - 3 x 15", "Towel curls - 3 x 12"],
+        "Dumbbells": ["1-arm rows - 4 x 10", "Hammer curls - 4 x 12", "Rear delt fly - 3 x 15", "DB RDL - 4 x 10"],
+        "Gym": ["Lat pulldown - 4 x 10", "Seated cable row - 4 x 10", "Machine high row - 3 x 12", "EZ-bar curls - 4 x 10"],
+    },
+    "Legs": {
+        "Bodyweight": ["Air squats - 5 x 20", "Walking lunges - 4 x 12 each", "Wall sit - 4 x 45 sec", "Glute bridges - 4 x 15"],
+        "Dumbbells": ["Goblet squats - 4 x 10", "DB RDL - 4 x 10", "Bulgarian split squat - 3 x 8 each", "Calf raises - 4 x 20"],
+        "Gym": ["Back squat - 4 x 5-8", "Romanian deadlift - 4 x 8", "Leg press - 3 x 12", "Leg curl - 3 x 12", "Leg extension - 3 x 15"],
+    },
+    "Cardio": {
+        "Bodyweight": ["Outdoor brisk walk - 45 min", "Jog/walk intervals - 35 min", "Hill walk - 30 min", "Shadow boxing intervals - 10 rounds"],
+        "Dumbbells": ["DB conditioning circuit - 5 rounds", "Farmer carry intervals - 6 rounds", "DB step-up circuit - 25 min"],
+        "Gym": ["Incline treadmill walk - 45 min", "Stair climber - 25 min", "Bike intervals - 25 min", "Row machine intervals - 20 min"],
+    },
+    "Upper": {
+        "Bodyweight": ["Push-ups - 4 x 15", "Inverted rows - 4 x 10", "Chair dips - 3 x 12", "Plank shoulder taps - 3 x 20"],
+        "Dumbbells": ["DB bench press - 4 x 10", "DB rows - 4 x 10", "Shoulder press - 3 x 10", "Hammer curls - 3 x 12"],
+        "Gym": ["Bench press - 4 x 6-8", "Lat pulldown - 4 x 10", "Cable row - 3 x 10", "Machine chest press - 3 x 10", "Cable curls - 3 x 12"],
+    },
+    "Full Body": {
+        "Bodyweight": ["Circuit: squats, push-ups, lunges, mountain climbers x 5 rounds", "Bodyweight EMOM - 20 min", "Outdoor athletic circuit - 35 min"],
+        "Dumbbells": ["DB squat to press - 4 x 10", "DB RDL - 4 x 10", "DB row - 4 x 10", "DB floor press - 3 x 12"],
+        "Gym": ["Trap bar deadlift - 4 x 5", "Bench press - 3 x 8", "Lat pulldown - 3 x 10", "Leg press - 3 x 12", "Cable row - 3 x 12"],
+    },
+}
+
+
+def build_workout(goal: str, focus: str, equipment: str, duration: int, intensity: str) -> Dict[str, Any]:
+    pool = EXERCISE_BANK.get(focus, EXERCISE_BANK["Full Body"]).get(equipment, [])
+    count = 3 if duration <= 30 else 4 if duration <= 45 else 5
+    selected = random.sample(pool, k=min(count, len(pool)))
+    return {
+        "goal": goal,
+        "focus": focus,
+        "equipment": equipment,
+        "duration": duration,
+        "intensity": intensity,
+        "warmup": ["Dynamic mobility x 4 min", "Activation warmup x 3 min"],
+        "main": selected,
+        "finisher": "Push pace for the last 5 minutes and finish with intent.",
+        "note": f"{intensity} {focus.lower()} session. Keep transitions tight and form clean.",
+    }
+
+
+# =========================================================
+# APP START
+# =========================================================
+inject_styles()
+data = load_data()
+profile = data["profile"]
+
+with st.sidebar:
+    st.markdown("## 🔥 Dez 75 Hard")
+    st.caption("Red premium edition")
+
+    selected_day = st.date_input("Selected day", value=date.today())
+    current_day = get_day(data, selected_day)
+
+    st.markdown("---")
+    st.markdown("### Quick Stats")
+    st.write(f"**Current streak:** {current_streak(data)}")
+    st.write(f"**Best streak:** {best_streak(data)}")
+    st.write(f"**Day number:** {day_number(profile, selected_day)}")
+
+    st.markdown("---")
+    st.markdown("### Profile")
+    profile["name"] = st.text_input("Name", value=profile.get("name", "Dez"))
+    profile["phase_name"] = st.text_input("Phase / Motto", value=profile.get("phase_name", "Built Different"))
+    profile["start_date"] = str(
+        st.date_input(
+            "75 Hard start date",
+            value=datetime.strptime(profile.get("start_date", str(date.today())), "%Y-%m-%d").date()
+            if profile.get("start_date") else date.today()
+        )
+    )
+
+    with st.expander("Goal settings"):
+        profile["daily_water_goal_oz"] = st.number_input("Water goal (oz)", min_value=32, max_value=256, value=int(profile.get("daily_water_goal_oz", 128)), step=8)
+        profile["daily_pages_goal"] = st.number_input("Pages goal", min_value=1, max_value=100, value=int(profile.get("daily_pages_goal", 10)), step=1)
+        profile["target_calories"] = st.number_input("Calories target", min_value=1000, max_value=6000, value=int(profile.get("target_calories", 2393)), step=10)
+        profile["target_protein"] = st.number_input("Protein target", min_value=50, max_value=400, value=int(profile.get("target_protein", 207)), step=1)
+        profile["target_carbs"] = st.number_input("Carbs target", min_value=0, max_value=600, value=int(profile.get("target_carbs", 241)), step=1)
+        profile["target_fats"] = st.number_input("Fats target", min_value=0, max_value=200, value=int(profile.get("target_fats", 66)), step=1)
+
+save_data(data)
+
+current_day = get_day(data, selected_day)
+current_day["discipline_score"] = calc_score(current_day, profile)
+save_data(data)
+
+score_val = calc_score(current_day, profile)
+streak_val = current_streak(data)
+
+hero(profile, selected_day, score_val, streak_val)
+
+tab_home, tab_checklist, tab_workouts, tab_macros, tab_calendar, tab_report, tab_charts, tab_coach = st.tabs([
+    "🏠 Home",
+    "✅ Checklist",
+    "🏋️ Workout Generator",
+    "🍽 Macros & Body",
+    "🗓 Calendar",
+    "📊 Weekly Report",
+    "📈 Progress Charts",
+    "🧠 Coach Chat",
+])
+
+# =========================================================
+# HOME
+# =========================================================
+with tab_home:
+    s1, s2, s3, s4 = st.columns(4)
+    with s1:
+        stat_card("Day Number", str(day_number(profile, selected_day)), "Your position in the 75 Hard run")
+    with s2:
+        stat_card("Current Streak", str(streak_val), "Consecutive completed days")
+    with s3:
+        stat_card("Best Streak", str(best_streak(data)), "Best run so far")
+    with s4:
+        stat_card("Discipline Score", f"{score_val}/100", "Weighted score for today")
+
+    b1, b2 = st.columns([1, 1.25])
+    with b1:
+        feature_banner(
+            "The workout that works out well.",
+            "Dez’s training system now feels more like a premium fitness brand — stronger visuals, sharper structure, and cleaner momentum.",
+            red_block=True,
+        )
+    with b2:
+        feature_banner(
+            "People. Motion. Intensity.",
+            "Use real workout imagery in the hero and feature banners so the app feels alive, premium, and built around action instead of plain widgets.",
+            image_path=COMMUNITY_IMG if os.path.exists(COMMUNITY_IMG) else WORKOUT_IMG,
+        )
+
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        mini_banner("Today’s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", WORKOUT_IMG)
+    with m2:
+        mini_banner("Progress Zone", "Daily consistency compounds into visible change.", PROGRESS_IMG)
+    with m3:
+        mini_banner("Coach Energy", "Use the coach tab for accountability and next-step focus.", COACH_IMG if os.path.exists(COACH_IMG) else HERO_IMG)
+
+    left, right = st.columns([1.25, 1])
+
+    with left:
+        section_card("Today", "Execution Summary", "Fast read on whether the day is trending strong or drifting.")
+
+        water_goal = profile.get("daily_water_goal_oz", 128)
+        pages_goal = profile.get("daily_pages_goal", 10)
+
+        st.markdown("**Water Progress**")
+        st.progress(min(current_day.get("water_oz", 0) / max(water_goal, 1), 1.0), text=f"{current_day.get('water_oz', 0)} / {water_goal} oz")
+
+        st.markdown("**Reading Progress**")
+        st.progress(min(current_day.get("pages_read", 0) / max(pages_goal, 1), 1.0), text=f"{current_day.get('pages_read', 0)} / {pages_goal} pages")
+
+        workouts_done = int(current_day.get("workout_1_done", False)) + int(current_day.get("workout_2_done", False))
+        st.markdown("**Workout Completion**")
+        st.progress(workouts_done / 2, text=f"{workouts_done} / 2 workouts completed")
+
+        st.markdown("### Mission Status")
+        st.write("✅ Diet locked in" if current_day.get("diet_followed") else "⬜ Diet still open")
+        st.write("✅ Progress photo done" if current_day.get("progress_picture") else "⬜ Progress photo still open")
+        st.write(
+            "✅ Outdoor workout logged"
+            if current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
+            else "⬜ Outdoor workout not logged yet"
+        )
+
+    with right:
+        section_card("Focus", "Dez’s Command Panel", "Use this as your quick daily lock-in zone.")
+
+        remaining = []
+        if current_day.get("water_oz", 0) < water_goal:
+            remaining.append(f"{water_goal - current_day.get('water_oz', 0)} oz water")
+        if current_day.get("pages_read", 0) < pages_goal:
+            remaining.append(f"{pages_goal - current_day.get('pages_read', 0)} pages")
+        if not current_day.get("diet_followed"):
+            remaining.append("diet confirmation")
+        if not current_day.get("progress_picture"):
+            remaining.append("progress photo")
+        if not current_day.get("workout_1_done"):
+            remaining.append("workout 1")
+        if not current_day.get("workout_2_done"):
+            remaining.append("workout 2")
+
+        st.markdown("**Remaining items**")
+        if remaining:
+            for item in remaining:
+                st.markdown(f"- {item}")
+        else:
+            st.markdown("- Nothing left. Clean finish.")
+
+        st.markdown("**Saved workout**")
+        sw = current_day.get("saved_workout", {})
+        if sw:
+            st.markdown(
+                f"""
+                <div class="glass-card">
+                    <strong>{sw.get("focus", "Workout")}</strong> • {sw.get("duration", 45)} min<br>
+                    <span class="small-muted">{sw.get("goal", "")} • {sw.get("equipment", "")} • {sw.get("intensity", "")}</span><br><br>
+                    {sw.get("note", "")}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.caption("No saved generated workout yet for this day.")
+
+        note = st.text_area("Daily note", value=current_day.get("notes", ""), height=130, placeholder="Write how the day felt, mood, wins, cravings, training notes...")
+        if st.button("Save Daily Note"):
+            current_day["notes"] = note
+            save_data(data)
+            st.success("Daily note saved.")
+
+# =========================================================
+# CHECKLIST
+# =========================================================
+with tab_checklist:
+    section_card("Daily Tracking", f"Checklist for {selected_day.strftime('%A, %b %d, %Y')}", "Log the essentials and protect the streak.")
+
+    left, right = st.columns([1.1, 1])
+
+    with left:
+        current_day["water_oz"] = st.number_input("Water consumed (oz)", min_value=0, max_value=300, value=int(current_day.get("water_oz", 0)), step=1)
+        current_day["pages_read"] = st.number_input("Pages read", min_value=0, max_value=100, value=int(current_day.get("pages_read", 0)), step=1)
+
+        current_day["diet_followed"] = st.checkbox("Diet Followed", value=bool(current_day.get("diet_followed", False)))
+        current_day["progress_picture"] = st.checkbox("Progress Photo", value=bool(current_day.get("progress_picture", False)))
+
+        st.markdown("### Workout 1")
+        current_day["workout_1_done"] = st.checkbox("Workout 1 done", value=bool(current_day.get("workout_1_done", False)))
+        current_day["workout_1_type"] = st.selectbox("Workout 1 type", ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"], index=["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"].index(current_day.get("workout_1_type", "") if current_day.get("workout_1_type", "") in ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"] else ""))
+        current_day["workout_1_location"] = st.selectbox("Workout 1 location", ["", "Outdoor", "Gym", "Home", "Other"], index=["", "Outdoor", "Gym", "Home", "Other"].index(current_day.get("workout_1_location", "") if current_day.get("workout_1_location", "") in ["", "Outdoor", "Gym", "Home", "Other"] else ""))
+        current_day["workout_1_minutes"] = st.number_input("Workout 1 minutes", min_value=0, max_value=240, value=int(current_day.get("workout_1_minutes", 45)), step=1)
+
+        st.markdown("### Workout 2")
+        current_day["workout_2_done"] = st.checkbox("Workout 2 done", value=bool(current_day.get("workout_2_done", False)))
+        current_day["workout_2_type"] = st.selectbox("Workout 2 type", ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"], index=["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"].index(current_day.get("workout_2_type", "") if current_day.get("workout_2_type", "") in ["", "Strength", "HIIT", "Walk", "Run", "Bike", "Yoga", "Sports", "Custom"] else ""), key="w2type")
+        current_day["workout_2_location"] = st.selectbox("Workout 2 location", ["", "Outdoor", "Gym", "Home", "Other"], index=["", "Outdoor", "Gym", "Home", "Other"].index(current_day.get("workout_2_location", "") if current_day.get("workout_2_location", "") in ["", "Outdoor", "Gym", "Home", "Other"] else ""), key="w2loc")
+        current_day["workout_2_minutes"] = st.number_input("Workout 2 minutes", min_value=0, max_value=240, value=int(current_day.get("workout_2_minutes", 45)), step=1, key="w2mins")
+
+        if st.button("Save Checklist"):
+            current_day["discipline_score"] = calc_score(current_day, profile)
+            save_data(data)
+            st.success("Checklist saved.")
+
+    with right:
+        sc = calc_score(current_day, profile)
+        stat_card("Discipline Score", f"{sc}/100", "Updates live as you log the day")
+
+        st.markdown("**Live Breakdown**")
+        st.write(f"Water: {current_day.get('water_oz', 0)} / {profile.get('daily_water_goal_oz', 128)} oz")
+        st.write(f"Pages: {current_day.get('pages_read', 0)} / {profile.get('daily_pages_goal', 10)}")
+        st.write(f"Diet: {'Done' if current_day.get('diet_followed') else 'Open'}")
+        st.write(f"Photo: {'Done' if current_day.get('progress_picture') else 'Open'}")
+        st.write(f"Workout 1: {'Done' if current_day.get('workout_1_done') else 'Open'}")
+        st.write(f"Workout 2: {'Done' if current_day.get('workout_2_done') else 'Open'}")
+
+        notes = st.text_area("Checklist notes", value=current_day.get("notes", ""), height=160, key="checklistnotes")
+        if st.button("Save Notes"):
+            current_day["notes"] = notes
+            save_data(data)
+            st.success("Notes saved.")
+
+# =========================================================
+# WORKOUT GENERATOR
+# =========================================================
+with tab_workouts:
+    section_card("Training Engine", "Workout Generator", "Generate cleaner sessions based on focus, equipment, intensity, and time.")
+
+    top1, top2 = st.columns([1, 1])
+    with top1:
+        feature_banner(
+            "Train hard. Track harder.",
+            "Build workout sessions that match your available equipment, your training goal, and how intense you want the day to be.",
+            image_path=WORKOUT_IMG,
+        )
+    with top2:
+        feature_banner(
+            "Red Zone Performance",
+            "Use saved sessions to make every day feel intentional instead of random.",
+            red_block=True,
+        )
+
+    left, right = st.columns([1, 1.2])
+
+    with left:
+        goal = st.selectbox("Goal", ["Fat Loss", "Muscle Gain", "Performance", "Recovery", "Conditioning"])
+        focus = st.selectbox("Focus", ["Push", "Pull", "Legs", "Cardio", "Upper", "Full Body"])
+        equipment = st.selectbox("Equipment", ["Bodyweight", "Dumbbells", "Gym"])
+        duration = st.slider("Duration", min_value=20, max_value=75, value=45, step=5)
+        intensity = st.select_slider("Intensity", options=["Low", "Moderate", "High"], value="Moderate")
+
+        if st.button("Generate Workout"):
+            st.session_state["generated_workout"] = build_workout(goal, focus, equipment, duration, intensity)
+
+        if st.button("Save Workout To Day"):
+            if "generated_workout" in st.session_state:
+                current_day["saved_workout"] = st.session_state["generated_workout"]
+                save_data(data)
+                st.success("Workout saved to selected day.")
+            else:
+                st.warning("Generate a workout first.")
+
+    with right:
+        workout = st.session_state.get("generated_workout") or current_day.get("saved_workout", {})
+        if workout:
+            st.markdown(
+                f"""
+                <div class="glass-card">
+                    <div class="section-kicker">Generated session</div>
+                    <div class="section-title">{workout.get("focus", "")} • {workout.get("duration", 45)} min</div>
+                    <div class="section-sub">{workout.get("goal", "")} • {workout.get("equipment", "")} • {workout.get("intensity", "")}</div>
+                    <div style="margin-top:0.7rem;">{workout.get("note", "")}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("### Warm-up")
+                for item in workout.get("warmup", []):
+                    st.markdown(f"- {item}")
+                st.markdown("### Main")
+                for item in workout.get("main", []):
+                    st.markdown(f"- {item}")
+            with c2:
+                st.markdown("### Finisher")
+                st.markdown(f"- {workout.get('finisher', '')}")
+                st.markdown("### Coaching")
+                st.markdown("- Pick one measurable win and beat it clean.")
+        else:
+            st.info("Generate a workout to see the session here.")
+
+# =========================================================
+# MACROS
+# =========================================================
+with tab_macros:
+    section_card("Nutrition & Body", "Macros + Weight Tracking", "Stay aligned with your body comp targets and recovery.")
+
+    top1, top2 = st.columns([1, 1])
+    with top1:
+        feature_banner(
+            "Fuel the build.",
+            "Log calories, protein, carbs, fats, and bodyweight so your training has nutrition behind it.",
+            red_block=True,
+        )
+    with top2:
+        feature_banner(
+            "Progress is measurable.",
+            "The more clean data you log, the more useful your trends become.",
+            image_path=PROGRESS_IMG,
+        )
+
+    left, right = st.columns(2)
+
+    with left:
+        current_day["weight"] = st.number_input("Weight", min_value=0.0, max_value=1000.0, value=float(current_day.get("weight") or 0.0), step=0.1, format="%.1f")
+        current_day["calories"] = st.number_input("Calories", min_value=0, max_value=10000, value=int(current_day.get("calories") or 0), step=1)
+        current_day["protein"] = st.number_input("Protein (g)", min_value=0, max_value=500, value=int(current_day.get("protein") or 0), step=1)
+        current_day["carbs"] = st.number_input("Carbs (g)", min_value=0, max_value=1000, value=int(current_day.get("carbs") or 0), step=1)
+        current_day["fats"] = st.number_input("Fats (g)", min_value=0, max_value=300, value=int(current_day.get("fats") or 0), step=1)
+
+        if st.button("Save Macros & Weight"):
+            save_data(data)
+            st.success("Macros and weight saved.")
+
+    with right:
+        tc = profile.get("target_calories", 2393)
+        tp = profile.get("target_protein", 207)
+        tcarb = profile.get("target_carbs", 241)
+        tf = profile.get("target_fats", 66)
+
+        st.markdown("**Calories**")
+        st.progress(min((current_day.get("calories") or 0) / max(tc, 1), 1.0), text=f"{current_day.get('calories') or 0} / {tc}")
+
+        st.markdown("**Protein**")
+        st.progress(min((current_day.get("protein") or 0) / max(tp, 1), 1.0), text=f"{current_day.get('protein') or 0} / {tp} g")
+
+        st.markdown("**Carbs**")
+        st.progress(min((current_day.get("carbs") or 0) / max(tcarb, 1), 1.0), text=f"{current_day.get('carbs') or 0} / {tcarb} g")
+
+        st.markdown("**Fats**")
+        st.progress(min((current_day.get("fats") or 0) / max(tf, 1), 1.0), text=f"{current_day.get('fats') or 0} / {tf} g")
+
+# =========================================================
+# CALENDAR
+# =========================================================
+with tab_calendar:
+    section_card("Calendar View", "Monthly Consistency Map", "See how cleanly you are stacking days.")
+
+    month = st.selectbox("Month", list(range(1, 13)), index=selected_day.month - 1)
+    year = st.number_input("Year", min_value=2024, max_value=2100, value=selected_day.year, step=1)
+
+    heads = st.columns(7)
+    for i, h in enumerate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]):
+        with heads[i]:
+            st.markdown(f"<div class='calendar-head'>{h}</div>", unsafe_allow_html=True)
+
+    cal = calendar.Calendar(firstweekday=6)
+    weeks = cal.monthdayscalendar(year, month)
+
+    for week in weeks:
+        cols = st.columns(7)
+        for i, n in enumerate(week):
+            with cols[i]:
+                if n == 0:
+                    st.markdown("<div class='calendar-empty'></div>", unsafe_allow_html=True)
+                else:
+                    d = date(year, month, n)
+                    dday = get_day(data, d)
+                    sc = calc_score(dday, profile)
+                    label = "✅ Complete" if day_complete(dday, profile) else "⚡ Strong" if sc >= 70 else "• Started" if sc > 0 else "— Empty"
+                    st.markdown(
+                        f"""
+                        <div class='calendar-box'>
+                            <strong>{n}</strong><br>
+                            <span class='small-muted'>{label}</span><br>
+                            <span class='small-muted'>Score: {sc}</span><br>
+                            <span class='small-muted'>Water: {dday.get("water_oz", 0)} oz</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+# =========================================================
+# WEEKLY REPORT
+# =========================================================
+with tab_report:
+    section_card("Weekly Analytics", "7-Day Report Card", "Review adherence, momentum, and where execution slipped.")
+
+    end = st.date_input("Weekly report ending on", value=date.today(), key="week_end")
+    start = end - timedelta(days=6)
+
+    rows = []
+    for i in range(7):
+        d = start + timedelta(days=i)
+        dday = get_day(data, d)
+        rows.append({
+            "Date": str(d),
+            "Score": calc_score(dday, profile),
+            "Complete": "Yes" if day_complete(dday, profile) else "No",
+            "Water": dday.get("water_oz", 0),
+            "Pages": dday.get("pages_read", 0),
+            "Workouts": int(dday.get("workout_1_done", False)) + int(dday.get("workout_2_done", False)),
+        })
+
+    wdf = pd.DataFrame(rows)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        stat_card("Completed Days", f"{(wdf['Complete'] == 'Yes').sum()}/7", "Days fully closed")
+    with c2:
+        stat_card("Average Score", f"{round(wdf['Score'].mean(), 1)}", "Weekly discipline average")
+    with c3:
+        stat_card("Average Water", f"{round(wdf['Water'].mean(), 1)} oz", "Average daily hydration")
+
+    st.dataframe(wdf, use_container_width=True, hide_index=True)
+
+# =========================================================
+# CHARTS
+# =========================================================
+with tab_charts:
+    section_card("Visual Progress", "Trend Lines", "See whether your effort is tightening up over time.")
+
+    df = progress_df(data)
+    if df.empty:
+        st.info("Log a few days first and your charts will show up here.")
+    else:
+        choice = st.selectbox("Chart view", ["score", "water_oz", "pages_read", "weight", "calories", "protein", "carbs", "fats"])
+        chart_df = df[["date", choice]].dropna()
+        if not chart_df.empty:
+            st.line_chart(chart_df.set_index("date"))
+        comp_df = df[["date", "complete"]].dropna()
+        if not comp_df.empty:
+            st.bar_chart(comp_df.set_index("date"))
+
+# =========================================================
+# COACH
+# =========================================================
+with tab_coach:
+    section_card("Mindset", "Coach Chat", "A sharper accountability coach using your current day stats.")
+
+    top1, top2 = st.columns([1, 1])
+    with top1:
+        feature_banner(
+            "Stay coached.",
+            "Use this area like a locker-room accountability tool when your day starts drifting.",
+            image_path=COACH_IMG if os.path.exists(COACH_IMG) else HERO_IMG,
+        )
+    with top2:
+        feature_banner(
+            "Dez Mode",
+            "Keep the standard high. The app should feel like it belongs to you.",
+            red_block=True,
+        )
+
+    for msg in data.get("coach_chat", []):
+        if msg.get("role") == "user":
+            st.markdown(f"<div class='coach-user'><strong>You:</strong><br>{msg.get('text', '')}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='coach-ai'><strong>Coach:</strong><br>{msg.get('text', '')}</div>", unsafe_allow_html=True)
+
+    user_msg = st.text_input("Message the coach", placeholder="Ask for motivation, status, what is left, workout help...")
+    cc1, cc2 = st.columns([1, 1])
+    with cc1:
+        if st.button("Send to Coach"):
+            if user_msg.strip():
+                data["coach_chat"].append({"role": "user", "text": user_msg.strip()})
+                reply = fallback_coach_response(user_msg.strip(), current_day, profile)
+                data["coach_chat"].append({"role": "ai", "text": reply})
+                save_data(data)
+                st.rerun()
+    with cc2:
+        if st.button("Clear Chat"):
+            data["coach_chat"] = [{"role": "ai", "text": "Chat reset. Good. Now lock back in and finish the day right."}]
+            save_data(data)
+            st.rerun()
+
+    st.markdown("### Quick Coach Prompts")
+    pc1, pc2, pc3, pc4 = st.columns(4)
+    prompts = [
+        "How am I doing today?",
+        "What do I have left?",
+        "Give me tough motivation",
+        "What should I do next right now?",
+    ]
+    cols = [pc1, pc2, pc3, pc4]
+    for col, prompt in zip(cols, prompts):
+        with col:
+            if st.button(prompt):
+                data["coach_chat"].append({"role": "user", "text": prompt})
+                reply = fallback_coach_response(prompt, current_day, profile)
+                data["coach_chat"].append({"role": "ai", "text": reply})
+                save_data(data)
+                st.rerun()
+
+save_data(data)
+
+st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)
