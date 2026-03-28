@@ -5,6 +5,7 @@ import calendar
 import random
 import base64
 import hmac
+import re
 from html import escape
 from datetime import date, datetime, timedelta
 from typing import Dict, Any
@@ -13,13 +14,14 @@ import pandas as pd
 
 st.set_page_config(
     page_title="Dez 75 Hard Command Center",
-    page_icon="🔥",
+    page_icon="ðŸ”¥",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 DATA_FILE = "seventyfive_data.json"
 IMG_DIR = "images"
+MEDIA_DIR = "media"
 
 HERO_IMG = os.path.join(IMG_DIR, "hero.jpg")
 WORKOUT_IMG = os.path.join(IMG_DIR, "workout.jpg")
@@ -27,6 +29,7 @@ PROGRESS_IMG = os.path.join(IMG_DIR, "progress.jpg")
 COMMUNITY_IMG = os.path.join(IMG_DIR, "community.jpg")
 COACH_IMG = os.path.join(IMG_DIR, "coach.jpg")
 MISSION_NATURE_IMG = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80"
+SCALE_IMG = "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=80"
 
 
 # =========================================================
@@ -905,6 +908,7 @@ def default_day() -> Dict[str, Any]:
         "carbs": None,
         "fats": None,
         "saved_workout": {},
+        "workout_media": [],
         "discipline_score": 0,
         "water": 0,
         "pages": 0,
@@ -1004,6 +1008,8 @@ def load_data() -> Dict[str, Any]:
                 clean["discipline_score"] = int(clean.get("tasks", 0))
             except Exception:
                 pass
+        if not isinstance(clean.get("workout_media"), list):
+            clean["workout_media"] = []
 
         clean["water"] = clean.get("water_oz", 0)
         clean["pages"] = clean.get("pages_read", 0)
@@ -1224,7 +1230,7 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
     st.markdown(
         f"""
         <div class="top-brand">
-            <div class="brand-left">🔥 Dez 75 Hard</div>
+            <div class="brand-left">ðŸ”¥ Dez 75 Hard</div>
             <div class="brand-right">Red Premium Edition</div>
         </div>
 
@@ -1232,7 +1238,7 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
             <div class="hero-eyebrow">Dez Performance System</div>
             <div class="hero-title">Burn Fat.<br>Build Muscle.<br>Stay Locked In.</div>
             <div class="hero-sub">
-                Premium command center for Dez’s 75 Hard run — training, hydration, reading, nutrition, recovery, and streak protection.
+                Premium command center for Dezâ€™s 75 Hard run â€” training, hydration, reading, nutrition, recovery, and streak protection.
             </div>
             <div class="pill-row">
                 <span class="pill">Day {day_number(profile, selected_day)}</span>
@@ -1332,6 +1338,23 @@ def fallback_coach_response(msg: str, day: Dict[str, Any], profile: Dict[str, An
     return "Lock in. Finish your tasks. Protect the streak."
 
 
+def save_uploaded_media(selected_day: date, uploaded_file) -> Dict[str, str]:
+    safe_stem = re.sub(r"[^a-zA-Z0-9_-]+", "_", os.path.splitext(uploaded_file.name)[0]).strip("_") or "workout_media"
+    ext = os.path.splitext(uploaded_file.name)[1].lower() or ".bin"
+    dated_dir = os.path.join(MEDIA_DIR, str(selected_day))
+    os.makedirs(dated_dir, exist_ok=True)
+    stamped_name = f"{datetime.now().strftime('%H%M%S')}_{safe_stem}{ext}"
+    saved_path = os.path.join(dated_dir, stamped_name)
+    with open(saved_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    kind = "video" if (uploaded_file.type or "").startswith("video/") else "image"
+    return {
+        "name": uploaded_file.name,
+        "path": saved_path,
+        "kind": kind,
+    }
+
+
 def progress_df(data: Dict[str, Any]) -> pd.DataFrame:
     rows = []
     for k, d in sorted(data["days"].items()):
@@ -1424,7 +1447,7 @@ with menu_col:
 inject_sidebar_state_css(st.session_state["custom_sidebar_open"])
 
 with st.sidebar:
-    st.markdown("## 🔥 Dez 75 Hard")
+    st.markdown("## ðŸ”¥ Dez 75 Hard")
     st.caption("Red premium edition")
 
     selected_day = st.date_input("Selected day", value=date.today())
@@ -1471,15 +1494,15 @@ streak_val = current_streak(data)
 
 hero(profile, selected_day, score_val, streak_val)
 
-tab_home, tab_checklist, tab_workouts, tab_macros, tab_calendar, tab_report, tab_charts, tab_coach = st.tabs([
-    "🏠 Home",
-    "✅ Checklist",
-    "🏋️ Workout Generator",
-    "🍽 Macros & Body",
-    "🗓 Calendar",
-    "📊 Weekly Report",
-    "📈 Progress Charts",
-    "🧠 Coach Chat",
+tab_home, tab_checklist, tab_workouts, tab_macros, tab_calendar, tab_report, tab_charts, tab_media, tab_coach = st.tabs([
+    "ðŸ  Home",
+    "âœ… Checklist",
+    "ðŸ‹ï¸ Workout Generator",
+    "ðŸ½ Macros & Body",
+    "ðŸ—“ Calendar",
+    "ðŸ“Š Weekly Report",
+    "ðŸ“ˆ Progress Charts",
+    "ðŸ§  Coach Chat",
 ])
 
 # =========================================================
@@ -1500,7 +1523,7 @@ with tab_home:
     with b1:
         feature_banner(
             "Built in the work. Proven by the reps.",
-            "Dez’s training system now feels more like a premium fitness brand — stronger visuals, sharper structure, and cleaner momentum.",
+            "Dezâ€™s training system now feels more like a premium fitness brand â€” stronger visuals, sharper structure, and cleaner momentum.",
             image_path=WORKOUT_IMG if os.path.exists(WORKOUT_IMG) else HERO_IMG,
             bg_size="cover",
             bg_position="center center",
@@ -1517,9 +1540,9 @@ with tab_home:
 
     m1, m2, m3 = st.columns(3)
     with m1:
-        mini_banner("Today’s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
+        mini_banner("Todayâ€™s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
     with m2:
-        mini_banner("Progress Zone", "Daily consistency compounds into visible change.", PROGRESS_IMG)
+        mini_banner("Progress Zone", "Daily consistency compounds into visible change.", SCALE_IMG)
     with m3:
         mini_banner("Coach Energy", "Use the coach tab for accountability and next-step focus.", COACH_IMG if os.path.exists(COACH_IMG) else HERO_IMG)
 
@@ -1548,12 +1571,12 @@ with tab_home:
         st.progress(workouts_done / 2, text=f"{workouts_done} / 2 workouts completed")
 
         st.markdown("### Mission Status")
-        st.write("✅ Diet locked in" if current_day.get("diet_followed") else "⬜ Diet still open")
-        st.write("✅ Progress photo done" if current_day.get("progress_picture") else "⬜ Progress photo still open")
+        st.write("âœ… Diet locked in" if current_day.get("diet_followed") else "â¬œ Diet still open")
+        st.write("âœ… Progress photo done" if current_day.get("progress_picture") else "â¬œ Progress photo still open")
         st.write(
-            "✅ Outdoor workout logged"
+            "âœ… Outdoor workout logged"
             if current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
-            else "⬜ Outdoor workout not logged yet"
+            else "â¬œ Outdoor workout not logged yet"
         )
 
         outdoor_logged = current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
@@ -1566,7 +1589,7 @@ with tab_home:
         ])
 
     with right:
-        section_card("Focus", "Dez’s Command Panel", "Use this as your quick daily lock-in zone.")
+        section_card("Focus", "Dezâ€™s Command Panel", "Use this as your quick daily lock-in zone.")
 
         remaining = []
         if current_day.get("water_oz", 0) < water_goal:
@@ -1590,8 +1613,8 @@ with tab_home:
             st.markdown(
                 f"""
                 <div class="glass-card">
-                    <strong>{sw.get("focus", "Workout")}</strong> • {sw.get("duration", 45)} min<br>
-                    <span class="small-muted">{sw.get("goal", "")} • {sw.get("equipment", "")} • {sw.get("intensity", "")}</span><br><br>
+                    <strong>{sw.get("focus", "Workout")}</strong> â€¢ {sw.get("duration", 45)} min<br>
+                    <span class="small-muted">{sw.get("goal", "")} â€¢ {sw.get("equipment", "")} â€¢ {sw.get("intensity", "")}</span><br><br>
                     {sw.get("note", "")}
                 </div>
                 """,
@@ -1703,8 +1726,8 @@ with tab_workouts:
                 f"""
                 <div class="glass-card">
                     <div class="section-kicker">Generated session</div>
-                    <div class="section-title">{workout.get("focus", "")} • {workout.get("duration", 45)} min</div>
-                    <div class="section-sub">{workout.get("goal", "")} • {workout.get("equipment", "")} • {workout.get("intensity", "")}</div>
+                    <div class="section-title">{workout.get("focus", "")} â€¢ {workout.get("duration", 45)} min</div>
+                    <div class="section-sub">{workout.get("goal", "")} â€¢ {workout.get("equipment", "")} â€¢ {workout.get("intensity", "")}</div>
                     <div style="margin-top:0.7rem;">{workout.get("note", "")}</div>
                 </div>
                 """,
@@ -1806,7 +1829,7 @@ with tab_calendar:
                     dday = get_day(data, d)
                     sc = calc_score(dday, profile)
                     challenge_day = challenge_day_label(profile, d)
-                    label = "✅ Complete" if day_complete(dday, profile) else "⚡ Strong" if sc >= 70 else "• Started" if sc > 0 else "— Empty"
+                    label = "âœ… Complete" if day_complete(dday, profile) else "âš¡ Strong" if sc >= 70 else "â€¢ Started" if sc > 0 else "â€” Empty"
                     st.markdown(
                         f"""
                         <div class='calendar-box'>
@@ -1873,6 +1896,52 @@ with tab_charts:
             st.bar_chart(comp_df.set_index("date"))
 
 # =========================================================
+# MEDIA
+# =========================================================
+with tab_media:
+    section_card("Workout Proof", "Photos + Videos", "Add workout pictures and clips for the selected day, then view them back here.")
+
+    media_items = current_day.setdefault("workout_media", [])
+
+    uploads = st.file_uploader(
+        "Upload workout photos or videos",
+        type=["png", "jpg", "jpeg", "webp", "mp4", "mov", "m4v"],
+        accept_multiple_files=True,
+        disabled=not can_edit,
+    )
+
+    if st.button("Save Media", disabled=not can_edit):
+        if uploads:
+            saved_count = 0
+            for uploaded in uploads:
+                saved = save_uploaded_media(selected_day, uploaded)
+                media_items.append(saved)
+                saved_count += 1
+            save_data(data)
+            st.success(f"Saved {saved_count} media file(s).")
+        else:
+            st.warning("Pick at least one photo or video first.")
+
+    if media_items:
+        st.markdown("### Saved Media")
+        for idx, item in enumerate(media_items):
+            st.markdown(f"**{item.get('name', f'Media {idx + 1}')}**")
+            media_path = item.get("path", "")
+            if item.get("kind") == "video":
+                try:
+                    with open(media_path, "rb") as f:
+                        st.video(f.read())
+                except Exception:
+                    st.caption("Video file not available.")
+            else:
+                try:
+                    st.image(media_path, use_container_width=True)
+                except Exception:
+                    st.caption("Image file not available.")
+    else:
+        st.info("No workout photos or videos saved for this day yet.")
+
+# =========================================================
 # COACH
 # =========================================================
 with tab_coach:
@@ -1927,3 +1996,4 @@ if can_edit:
     save_data(data)
 
 st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)
+
