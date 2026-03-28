@@ -1868,4 +1868,5 @@ with tab_coach:
 if can_edit:
     save_data(data)
 
-st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)   
+
