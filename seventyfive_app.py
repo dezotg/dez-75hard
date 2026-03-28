@@ -818,6 +818,9 @@ def inject_sidebar_state_css(sidebar_open: bool):
             min-width: {desktop_width} !important;
             width: {desktop_width} !important;
             margin-left: {desktop_margin} !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            overflow: visible !important;
             transition: margin-left 0.2s ease, width 0.2s ease !important;
         }}
 
@@ -831,6 +834,8 @@ def inject_sidebar_state_css(sidebar_open: bool):
                 min-width: {mobile_width} !important;
                 width: {mobile_width} !important;
                 margin-left: {mobile_margin} !important;
+                transform: translateX(0) !important;
+                visibility: visible !important;
             }}
         }}
         </style>
