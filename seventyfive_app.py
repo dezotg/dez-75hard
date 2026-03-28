@@ -1230,7 +1230,7 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
     st.markdown(
         f"""
         <div class="top-brand">
-            <div class="brand-left">ðŸ”¥ Dez 75 Hard</div>
+            <div class="brand-left">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¥ Dez 75 Hard</div>
             <div class="brand-right">Red Premium Edition</div>
         </div>
 
@@ -1238,7 +1238,7 @@ def hero(profile: Dict[str, Any], selected_day: date, score_val: int, streak_val
             <div class="hero-eyebrow">Dez Performance System</div>
             <div class="hero-title">Burn Fat.<br>Build Muscle.<br>Stay Locked In.</div>
             <div class="hero-sub">
-                Premium command center for Dezâ€™s 75 Hard run â€” training, hydration, reading, nutrition, recovery, and streak protection.
+                Premium command center for DezÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s 75 Hard run ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â training, hydration, reading, nutrition, recovery, and streak protection.
             </div>
             <div class="pill-row">
                 <span class="pill">Day {day_number(profile, selected_day)}</span>
@@ -1495,14 +1495,15 @@ streak_val = current_streak(data)
 hero(profile, selected_day, score_val, streak_val)
 
 tab_home, tab_checklist, tab_workouts, tab_macros, tab_calendar, tab_report, tab_charts, tab_media, tab_coach = st.tabs([
-    "ðŸ  Home",
-    "âœ… Checklist",
-    "ðŸ‹ï¸ Workout Generator",
-    "ðŸ½ Macros & Body",
-    "ðŸ—“ Calendar",
-    "ðŸ“Š Weekly Report",
-    "ðŸ“ˆ Progress Charts",
-    "ðŸ§  Coach Chat",
+    "Home",
+    "Checklist",
+    "Workout Generator",
+    "Macros & Body",
+    "Calendar",
+    "Weekly Report",
+    "Progress Charts",
+    "Media",
+    "Coach Chat",
 ])
 
 # =========================================================
@@ -1523,7 +1524,7 @@ with tab_home:
     with b1:
         feature_banner(
             "Built in the work. Proven by the reps.",
-            "Dezâ€™s training system now feels more like a premium fitness brand â€” stronger visuals, sharper structure, and cleaner momentum.",
+            "DezÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s training system now feels more like a premium fitness brand ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â stronger visuals, sharper structure, and cleaner momentum.",
             image_path=WORKOUT_IMG if os.path.exists(WORKOUT_IMG) else HERO_IMG,
             bg_size="cover",
             bg_position="center center",
@@ -1540,7 +1541,7 @@ with tab_home:
 
     m1, m2, m3 = st.columns(3)
     with m1:
-        mini_banner("Todayâ€™s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
+        mini_banner("TodayÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s Mission", "Hydrate. Read. Train twice. Eat clean. Protect the streak.", MISSION_NATURE_IMG)
     with m2:
         mini_banner("Progress Zone", "Daily consistency compounds into visible change.", SCALE_IMG)
     with m3:
@@ -1571,12 +1572,12 @@ with tab_home:
         st.progress(workouts_done / 2, text=f"{workouts_done} / 2 workouts completed")
 
         st.markdown("### Mission Status")
-        st.write("âœ… Diet locked in" if current_day.get("diet_followed") else "â¬œ Diet still open")
-        st.write("âœ… Progress photo done" if current_day.get("progress_picture") else "â¬œ Progress photo still open")
+        st.write("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Diet locked in" if current_day.get("diet_followed") else "ÃƒÂ¢Ã‚Â¬Ã…â€œ Diet still open")
+        st.write("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Progress photo done" if current_day.get("progress_picture") else "ÃƒÂ¢Ã‚Â¬Ã…â€œ Progress photo still open")
         st.write(
-            "âœ… Outdoor workout logged"
+            "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Outdoor workout logged"
             if current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
-            else "â¬œ Outdoor workout not logged yet"
+            else "ÃƒÂ¢Ã‚Â¬Ã…â€œ Outdoor workout not logged yet"
         )
 
         outdoor_logged = current_day.get("workout_1_location", "").lower() == "outdoor" or current_day.get("workout_2_location", "").lower() == "outdoor"
@@ -1589,7 +1590,7 @@ with tab_home:
         ])
 
     with right:
-        section_card("Focus", "Dezâ€™s Command Panel", "Use this as your quick daily lock-in zone.")
+        section_card("Focus", "DezÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s Command Panel", "Use this as your quick daily lock-in zone.")
 
         remaining = []
         if current_day.get("water_oz", 0) < water_goal:
@@ -1613,8 +1614,8 @@ with tab_home:
             st.markdown(
                 f"""
                 <div class="glass-card">
-                    <strong>{sw.get("focus", "Workout")}</strong> â€¢ {sw.get("duration", 45)} min<br>
-                    <span class="small-muted">{sw.get("goal", "")} â€¢ {sw.get("equipment", "")} â€¢ {sw.get("intensity", "")}</span><br><br>
+                    <strong>{sw.get("focus", "Workout")}</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {sw.get("duration", 45)} min<br>
+                    <span class="small-muted">{sw.get("goal", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {sw.get("equipment", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {sw.get("intensity", "")}</span><br><br>
                     {sw.get("note", "")}
                 </div>
                 """,
@@ -1726,8 +1727,8 @@ with tab_workouts:
                 f"""
                 <div class="glass-card">
                     <div class="section-kicker">Generated session</div>
-                    <div class="section-title">{workout.get("focus", "")} â€¢ {workout.get("duration", 45)} min</div>
-                    <div class="section-sub">{workout.get("goal", "")} â€¢ {workout.get("equipment", "")} â€¢ {workout.get("intensity", "")}</div>
+                    <div class="section-title">{workout.get("focus", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {workout.get("duration", 45)} min</div>
+                    <div class="section-sub">{workout.get("goal", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {workout.get("equipment", "")} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {workout.get("intensity", "")}</div>
                     <div style="margin-top:0.7rem;">{workout.get("note", "")}</div>
                 </div>
                 """,
@@ -1829,7 +1830,7 @@ with tab_calendar:
                     dday = get_day(data, d)
                     sc = calc_score(dday, profile)
                     challenge_day = challenge_day_label(profile, d)
-                    label = "âœ… Complete" if day_complete(dday, profile) else "âš¡ Strong" if sc >= 70 else "â€¢ Started" if sc > 0 else "â€” Empty"
+                    label = "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Complete" if day_complete(dday, profile) else "ÃƒÂ¢Ã…Â¡Ã‚Â¡ Strong" if sc >= 70 else "ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Started" if sc > 0 else "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Empty"
                     st.markdown(
                         f"""
                         <div class='calendar-box'>
