@@ -668,13 +668,76 @@ def inject_styles():
     }
 
     @media (max-width: 900px) {
+        .stApp::before {
+            display: none !important;
+        }
+
+        .block-container {
+            padding-top: 0.65rem;
+            padding-left: 0.8rem;
+            padding-right: 0.8rem;
+        }
+
+        [data-testid="stSidebar"] {
+            min-width: 100vw !important;
+            width: 100vw !important;
+        }
+
+        [data-testid="stSidebar"][aria-expanded="false"] {
+            min-width: 0 !important;
+            width: 0 !important;
+            margin-left: -100vw !important;
+            transform: translateX(-100%) !important;
+        }
+
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            border-radius: 18px;
+            padding: 0.3rem;
+            gap: 0.35rem;
+        }
+
+        button[data-baseweb="tab"] {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.9rem !important;
+        }
+
         .hero {
-            min-height: 420px;
-            padding: 2rem 1.4rem 1.5rem 1.4rem;
+            min-height: 360px;
+            padding: 1.35rem 1rem 1.1rem 1rem;
+            border-radius: 22px;
         }
 
         .hero-title {
-            font-size: 2.75rem;
+            font-size: 2rem;
+            line-height: 0.95;
+        }
+
+        .hero-sub {
+            font-size: 0.95rem;
+            max-width: 100%;
+        }
+
+        .pill-row {
+            gap: 0.45rem;
+        }
+
+        .pill {
+            font-size: 0.75rem;
+            padding: 0.45rem 0.65rem;
+        }
+
+        .feature-banner {
+            min-height: 250px;
+            padding: 1rem;
+            border-radius: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.05rem;
+        }
+
+        .feature-text {
+            font-size: 0.76rem;
         }
 
         .status-grid,
