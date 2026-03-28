@@ -59,7 +59,7 @@ def background_style(image_path: str, overlay: str, size: str = "cover", positio
 def inject_styles():
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Material+Symbols+Outlined&family=Material+Symbols+Rounded&display=swap');
     :root {
         --bg: #0b0e14;
         --bg2: #171c26;
