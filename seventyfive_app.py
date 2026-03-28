@@ -129,17 +129,13 @@ def inject_styles():
     }
 
     header[data-testid="stHeader"] {
-        display: none !important;
+        background: rgba(10, 13, 19, 0.78) !important;
+        border-bottom: 1px solid rgba(255,255,255,0.06) !important;
     }
 
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stSidebarCollapseButton"],
-    [data-testid="stSidebarHeader"],
-    section[data-testid="stSidebar"] > div:first-child > div:first-child > button,
-    section[data-testid="stSidebar"] button[kind="header"],
-    section[data-testid="stSidebar"] [aria-label*="sidebar"],
-    section[data-testid="stSidebar"] [title*="sidebar"] {
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"] {
         display: none !important;
     }
 
