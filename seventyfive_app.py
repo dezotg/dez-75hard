@@ -770,8 +770,7 @@ def inject_styles():
 def get_app_password() -> str:
     secret_password = ""
     try:
-      secret_password = str(st.secrets.get("APP_PASSWORD", "")).strip()
-
+        secret_password = str(st.secrets.get("APP_PASSWORD", "")).strip()
     except Exception:
         secret_password = ""
     return os.getenv("APP_PASSWORD", secret_password).strip()
@@ -797,7 +796,7 @@ def require_app_password():
         unsafe_allow_html=True,
     )
     entered = st.text_input("App password", type="password", placeholder="Enter your password")
-    if st.button("Unlock App", use_container_width=True):
+    if st.button("Unlock App"):
         if hmac.compare_digest(entered, app_password):
             st.session_state["app_unlocked"] = True
             st.rerun()
