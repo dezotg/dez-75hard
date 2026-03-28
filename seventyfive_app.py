@@ -133,6 +133,37 @@ def inject_styles():
         border-bottom: none !important;
     }
 
+    button[kind="header"] {
+        position: relative !important;
+        min-width: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        background: rgba(17, 24, 39, 0.82) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        color: transparent !important;
+        font-size: 0 !important;
+        overflow: hidden !important;
+    }
+
+    button[kind="header"]::after {
+        content: "‹‹" !important;
+        position: absolute !important;
+        inset: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #ffffff !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.18em !important;
+    }
+
+    button[kind="header"] * {
+        opacity: 0 !important;
+    }
+
     .stApp {
         margin-top: 0 !important;
     }
