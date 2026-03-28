@@ -797,6 +797,48 @@ def inject_styles():
     """, unsafe_allow_html=True)
 
 
+def inject_sidebar_state_css(sidebar_open: bool):
+    desktop_width = "300px" if sidebar_open else "0px"
+    desktop_margin = "0" if sidebar_open else "-320px"
+    mobile_width = "86vw" if sidebar_open else "0"
+    mobile_margin = "0" if sidebar_open else "-90vw"
+    accent_opacity = "0.42" if sidebar_open else "0"
+    accent_left = "300px" if sidebar_open else "0px"
+
+    st.markdown(
+        f"""
+        <style>
+        header[data-testid="stHeader"],
+        [data-testid="collapsedControl"],
+        button[kind="header"] {{
+            display: none !important;
+        }}
+
+        [data-testid="stSidebar"] {{
+            min-width: {desktop_width} !important;
+            width: {desktop_width} !important;
+            margin-left: {desktop_margin} !important;
+            transition: margin-left 0.2s ease, width 0.2s ease !important;
+        }}
+
+        .stApp::before {{
+            left: {accent_left} !important;
+            opacity: {accent_opacity} !important;
+        }}
+
+        @media (max-width: 900px) {{
+            [data-testid="stSidebar"] {{
+                min-width: {mobile_width} !important;
+                width: {mobile_width} !important;
+                margin-left: {mobile_margin} !important;
+            }}
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def get_app_password() -> str:
     secret_password = ""
     try:
@@ -1365,6 +1407,17 @@ inject_styles()
 data = load_data()
 profile = data["profile"]
 
+if "custom_sidebar_open" not in st.session_state:
+    st.session_state["custom_sidebar_open"] = True
+
+menu_col, _ = st.columns([0.18, 0.82])
+with menu_col:
+    if st.button("Hide Menu" if st.session_state["custom_sidebar_open"] else "Show Menu", key="custom_sidebar_toggle"):
+        st.session_state["custom_sidebar_open"] = not st.session_state["custom_sidebar_open"]
+        st.rerun()
+
+inject_sidebar_state_css(st.session_state["custom_sidebar_open"])
+
 with st.sidebar:
     st.markdown("## 🔥 Dez 75 Hard")
     st.caption("Red premium edition")
@@ -1868,5 +1921,4 @@ with tab_coach:
 if can_edit:
     save_data(data)
 
-st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)   
-
+st.markdown("<div class='footer-note'>Built for discipline, momentum, and clean execution.</div>", unsafe_allow_html=True)
