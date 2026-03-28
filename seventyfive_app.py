@@ -91,6 +91,9 @@ def inject_styles():
         font-style: normal !important;
         letter-spacing: normal !important;
         text-transform: none !important;
+        font-feature-settings: "liga" 1 !important;
+        -webkit-font-feature-settings: "liga" 1 !important;
+        font-variant-ligatures: contextual !important;
     }
 
     .stApp {
@@ -147,6 +150,9 @@ def inject_styles():
         line-height: 1 !important;
         letter-spacing: normal !important;
         text-transform: none !important;
+        font-feature-settings: "liga" 1 !important;
+        -webkit-font-feature-settings: "liga" 1 !important;
+        font-variant-ligatures: contextual !important;
         overflow: hidden !important;
     }
 
