@@ -134,37 +134,20 @@ def inject_styles():
     }
 
     button[kind="header"] {
-        position: relative !important;
-        min-width: 36px !important;
-        width: 36px !important;
-        height: 36px !important;
+        min-width: 42px !important;
+        width: 42px !important;
+        height: 42px !important;
         padding: 0 !important;
         border-radius: 10px !important;
         background: rgba(17, 24, 39, 0.82) !important;
         border: 1px solid rgba(255,255,255,0.08) !important;
-        color: transparent !important;
-        font-size: 0 !important;
-        line-height: 0 !important;
-        text-indent: -9999px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-    }
-
-    button[kind="header"]::after {
-        content: "‹‹" !important;
-        position: absolute !important;
-        inset: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
         color: #ffffff !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.18em !important;
-    }
-
-    button[kind="header"] * {
-        opacity: 0 !important;
+        font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
+        font-size: 24px !important;
+        line-height: 1 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        overflow: hidden !important;
     }
 
     .stApp {
