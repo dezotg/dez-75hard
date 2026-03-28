@@ -770,7 +770,8 @@ def inject_styles():
 def get_app_password() -> str:
     secret_password = ""
     try:
-        secret_password = str(st.secrets.get("APP_PASSWORD", "")).strip()
+      secret_password = str(st.secrets.get("APP_PASSWORD", "")).strip()
+
     except Exception:
         secret_password = ""
     return os.getenv("APP_PASSWORD", secret_password).strip()
