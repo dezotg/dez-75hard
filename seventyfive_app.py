@@ -135,28 +135,7 @@ def inject_styles():
     }
 
     header[data-testid="stHeader"] {
-        background: transparent !important;
-        border-bottom: none !important;
-    }
-
-    button[kind="header"] {
-        min-width: 42px !important;
-        width: 42px !important;
-        height: 42px !important;
-        padding: 0 !important;
-        border-radius: 10px !important;
-        background: rgba(17, 24, 39, 0.82) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        color: #ffffff !important;
-        font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
-        font-size: 24px !important;
-        line-height: 1 !important;
-        letter-spacing: normal !important;
-        text-transform: none !important;
-        font-feature-settings: "liga" 1 !important;
-        -webkit-font-feature-settings: "liga" 1 !important;
-        font-variant-ligatures: contextual !important;
-        overflow: hidden !important;
+        display: none !important;
     }
 
     .stApp {
