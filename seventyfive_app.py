@@ -134,7 +134,12 @@ def inject_styles():
         z-index: 1;
     }
 
-    header[data-testid="stHeader"] {
+    header[data-testid="stHeader"],
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarHeader"],
+    button[kind="header"] {
         display: none !important;
     }
 
