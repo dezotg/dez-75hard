@@ -1,0 +1,10 @@
+{
+  "name": "Locked In 75 \u2014 DezOTG Edition",
+  "short_name": "Locked In 75",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080a0f",
+  "theme_color": "#090b12",
+  "description": "Custom 75-day challenge with an HHN flex day on October 12."
+}

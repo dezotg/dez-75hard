@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Locked In 75">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Locked In 75</title>
+<style>
+:root{--bg:#080a0f;--panel:#121722;--line:#232a36;--text:#f7f9fc;--muted:#92a0b3;--purple:#7c3aed;--cyan:#22d3ee;--green:#10b981;--gold:#f59e0b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;background:
+radial-gradient(circle at top left,rgba(124,58,237,.22),transparent 28%),
+radial-gradient(circle at top right,rgba(34,211,238,.13),transparent 26%),
+linear-gradient(180deg,#07090d,#0b0f16 70%);color:var(--text);min-height:100vh;padding-bottom:110px}
+.wrap{max-width:760px;margin:auto;padding:18px 16px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.brand{font-weight:950;letter-spacing:.09em;font-size:22px}.brand span{background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;color:transparent}
+.tag{font-size:11px;border:1px solid rgba(167,139,250,.25);background:rgba(124,58,237,.1);padding:7px 10px;border-radius:999px;color:#c4b5fd}
+.card{background:linear-gradient(180deg,rgba(18,23,34,.96),rgba(12,17,25,.96));border:1px solid rgba(255,255,255,.08);box-shadow:0 18px 45px rgba(0,0,0,.3);border-radius:22px;padding:16px;margin-bottom:14px}
+.hero{position:relative;overflow:hidden}.hero:before{content:"";position:absolute;width:220px;height:120px;background:linear-gradient(90deg,rgba(124,58,237,.5),rgba(34,211,238,.25));filter:blur(50px);top:-60px;left:-40px}.hero>*{position:relative}
+.kicker{font-size:12px;color:#a5b4fc;text-transform:uppercase;font-weight:850;letter-spacing:.1em}.day{font-size:40px;font-weight:950;margin:5px 0}.muted{color:var(--muted)}
+.progress{height:10px;border-radius:999px;background:#1f2632;overflow:hidden;margin-top:14px}.fill{height:100%;width:0;background:linear-gradient(90deg,#7c3aed,#22d3ee)}
+.event{border-color:rgba(245,158,11,.38);background:linear-gradient(180deg,rgba(65,42,8,.55),rgba(22,17,11,.95))}
+.eventpill{display:inline-block;background:rgba(245,158,11,.16);color:#fbbf24;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900}
+.event h2{font-size:24px;margin:10px 0 6px}.rule{padding:9px 0;border-top:1px solid rgba(245,158,11,.13);font-size:14px}.rule:first-of-type{border-top:0}
+.title{display:flex;justify-content:space-between;align-items:center;font-weight:850;margin-bottom:10px}.task{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}.task:first-of-type{border-top:0}.task input{width:24px;height:24px;accent-color:var(--cyan)}.task.done label{text-decoration:line-through;color:#6f7c8f}label{flex:1}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}
+button,input,select,textarea{font:inherit}button{border:0;border-radius:14px;padding:12px 14px;font-weight:850;background:#1d2635;color:#fff}button.primary{background:linear-gradient(90deg,#7c3aed,#4f46e5)}button.cyan{background:linear-gradient(90deg,#0891b2,#06b6d4)}button.full{width:100%}
+input,select,textarea{width:100%;background:#0a1018;border:1px solid var(--line);color:#fff;border-radius:13px;padding:12px;outline:none}textarea{min-height:80px}
+.metric{background:#0b111a;border:1px solid var(--line);border-radius:16px;padding:14px}.metric b{display:block;font-size:24px;margin-top:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mt{margin-top:10px}.badge{font-size:11px;font-weight:900;padding:4px 8px;border-radius:999px;background:#112d29;color:#6ee7b7}
+.workout{padding:10px 0;border-top:1px solid var(--line);font-size:14px}.workout:first-child{border-top:0}
+.photo{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--line);background:#0a1018;border-radius:16px}
+nav{position:fixed;left:0;right:0;bottom:0;background:rgba(6,9,14,.9);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.06);padding:8px 12px calc(8px + env(safe-area-inset-bottom));z-index:50}.nav{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.nav button{background:transparent;color:#7f8da3;padding:9px 5px;font-size:12px}.nav button.active{color:#e0e7ff;background:rgba(124,58,237,.14)}
+.view{display:none}.view.active{display:block}.note{font-size:12px;color:#7f8da3;text-align:center}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.day{font-size:35px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div class="brand"><span>LOCKED IN</span> 75</div><div class="tag">DEZOTG EDITION</div></div>
+
+<section id="today" class="view active">
+<div class="card hero">
+<div class="kicker">Custom 75-day challenge</div><div id="dayLabel" class="day">Day 1 of 75</div><div id="dates" class="muted"></div>
+<div class="progress"><div id="challengeFill" class="fill"></div></div>
+</div>
+
+<div class="card event">
+<span class="eventpill">OCT 12 • HHN FLEX DAY</span>
+<h2>Enjoy the night. Keep the streak.</h2>
+<div id="countdown" class="muted">Planned flex day</div>
+<div class="rule"><b>Morning:</b> 45-minute workout</div>
+<div class="rule"><b>At Universal:</b> 12,000+ steps counts as your second movement block</div>
+<div class="rule"><b>Hydration:</b> gallon target still applies</div>
+<div class="rule"><b>Reading + photo:</b> still required</div>
+<div class="rule"><b>Drinks:</b> allowed on this planned flex day</div>
+<div class="rule"><b>Food:</b> enjoy HHN, then return to plan the next day</div>
+</div>
+
+<div class="card"><div class="title"><span id="checkTitle">Today's checklist</span><span id="checkCount" class="muted">0/8</span></div><div id="tasks"></div></div>
+
+<div class="card">
+<div class="title">Hydration <span id="waterPct" class="badge">0%</span></div>
+<div class="row"><div class="metric"><span class="muted">Today</span><b id="waterText">0 oz</b></div><button onclick="addWater(16)">+16 oz</button><button onclick="addWater(24)">+24 oz</button></div>
+<div class="progress"><div id="waterFill" class="fill"></div></div>
+<button class="cyan full mt" onclick="setWater(128)">Mark gallon complete</button>
+</div>
+</section>
+
+<section id="workouts" class="view">
+<div class="card"><div class="title">Log workout</div>
+<div class="row"><select id="wType"><option>Walk</option><option>Run</option><option>Strength</option><option>Cardio</option><option>Mobility</option><option>Other</option></select><input id="wMin" type="number" value="45" min="1" placeholder="Minutes"></div>
+<div class="row mt"><select id="wPlace"><option>Outdoor</option><option>Indoor</option></select><input id="wNote" placeholder="Notes"></div>
+<button class="primary full mt" onclick="logWorkout()">Add workout</button></div>
+<div class="card"><div class="title">Today's workouts</div><div id="workoutList" class="muted">Nothing logged yet.</div></div>
+</section>
+
+<section id="progressView" class="view">
+<div class="card"><div class="title">Progress photo</div><img id="photo" class="photo" alt="Progress photo"><input id="photoInput" class="mt" type="file" accept="image/*" capture="environment"><button class="primary full mt" onclick="savePhoto()">Save today's photo</button></div>
+<div class="card"><div class="title">Weight</div><div class="row"><input id="weight" type="number" step=".1" placeholder="Weight (lb)"><button onclick="saveWeight()">Log</button></div><div id="weights" class="mt muted">No weigh-ins yet.</div></div>
+<div class="grid"><div class="metric"><span class="muted">Perfect days</span><b id="perfectDays">0</b></div><div class="metric"><span class="muted">Current streak</span><b id="streak">0</b></div></div>
+</section>
+
+<section id="settings" class="view">
+<div class="card"><div class="title">Challenge dates</div><label class="muted">Start date</label><input id="startDate" type="date"><label class="muted" style="display:block;margin-top:10px">HHN flex day</label><input id="eventDate" type="date"><button class="primary full mt" onclick="saveDates()">Save dates</button></div>
+<div class="card"><div class="title">Your why</div><textarea id="why" placeholder="Why are you locking in?"></textarea><button class="full mt" onclick="saveWhy()">Save motivation</button></div>
+<div class="card"><div class="title">Backup</div><button class="full" onclick="exportData()">Export data</button><input id="importFile" class="mt" type="file" accept="application/json"><button class="full mt" onclick="importData()">Import backup</button></div>
+<div class="card"><div class="title">Restart</div><div class="muted">Regular days are strict. Oct 12 is your planned flex day and does not force a restart.</div><button class="full mt" style="background:#3b171a;color:#fecaca" onclick="restart()">Restart at Day 1</button></div>
+<div class="note">Install on iPhone: open this site in Safari → Share → Add to Home Screen.</div>
+</section>
+</div>
+
+<nav><div class="nav">
+<button class="active" onclick="showView('today',this)">Today</button>
+<button onclick="showView('workouts',this)">Workouts</button>
+<button onclick="showView('progressView',this)">Progress</button>
+<button onclick="showView('settings',this)">Settings</button>
+</div></nav>
+
+<script>
+const NORMAL=["Workout #1 — 45 minutes","Workout #2 — 45 minutes","At least one workout outdoors","Follow nutrition plan","No alcohol / no cheat meals","Drink 1 gallon (128 oz)","Read 10 pages","Take progress photo"];
+const FLEX=["Morning workout — 45 minutes","12,000+ steps at HHN","Movement completed outdoors","Hydration target complete","Read 10 pages","Take progress photo","Enjoy HHN without guilt","Return to plan tomorrow"];
+const KEY="locked_in_75_dez_pwa_v1";
+let data=JSON.parse(localStorage.getItem(KEY)||"null")||{startDate:"2026-09-22",eventDate:"2026-10-12",days:{},weights:[],why:""};
+const localISO=(d=new Date())=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)};
+const todayKey=()=>localISO(), isFlex=(k=todayKey())=>k===data.eventDate;
+function dayData(k=todayKey()){if(!data.days[k])data.days[k]={tasks:{},water:0,workouts:[],photo:null};return data.days[k]}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function dayNum(){return Math.floor((new Date(todayKey()+"T00:00:00")-new Date(data.startDate+"T00:00:00"))/86400000)+1}
+function endDate(){let d=new Date(data.startDate+"T00:00:00");d.setDate(d.getDate()+74);return d}
+function fmt(d){return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}
+function currentTasks(){return isFlex()?FLEX:NORMAL}
+function render(){
+ const t=dayData(), dn=dayNum(), list=currentTasks();
+ document.getElementById("dayLabel").textContent=dn<1?"Starts soon":dn>75?"Challenge complete":`Day ${dn} of 75`;
+ document.getElementById("dates").textContent=`${fmt(new Date(data.startDate+"T00:00:00"))} → ${fmt(endDate())}`;
+ document.getElementById("challengeFill").style.width=Math.max(0,Math.min(100,(dn-1)/75*100))+"%";
+ document.getElementById("startDate").value=data.startDate;document.getElementById("eventDate").value=data.eventDate;document.getElementById("why").value=data.why||"";
+ let diff=Math.ceil((new Date(data.eventDate+"T00:00:00")-new Date(todayKey()+"T00:00:00"))/86400000);
+ document.getElementById("countdown").textContent=diff>0?`${diff} days until HHN`:diff===0?"HHN is today — flex mode is active":`${Math.abs(diff)} days since HHN`;
+ document.getElementById("checkTitle").textContent=isFlex()?"HHN Flex Day checklist":"Today's checklist";
+ const tasksEl=document.getElementById("tasks");tasksEl.innerHTML="";
+ list.forEach((name,i)=>{let row=document.createElement("div");row.className="task"+(t.tasks[i]?" done":"");let cb=document.createElement("input");cb.type="checkbox";cb.checked=!!t.tasks[i];cb.onchange=()=>{t.tasks[i]=cb.checked;save();render()};let label=document.createElement("label");label.textContent=name;row.append(cb,label);tasksEl.append(row)});
+ if(t.water>=128){if(isFlex())t.tasks[3]=true;else t.tasks[5]=true}
+ let done=list.filter((_,i)=>t.tasks[i]).length;document.getElementById("checkCount").textContent=`${done}/${list.length}`;
+ document.getElementById("waterText").textContent=`${t.water||0} oz`;let p=Math.min(100,(t.water||0)/128*100);document.getElementById("waterFill").style.width=p+"%";document.getElementById("waterPct").textContent=Math.round(p)+"%";
+ renderWorkouts();renderProgress();save();
+}
+function addWater(n){let t=dayData();t.water=Math.max(0,(t.water||0)+n);save();render()}function setWater(n){dayData().water=n;save();render()}
+function logWorkout(){let t=dayData(),mins=+document.getElementById("wMin").value||0,place=document.getElementById("wPlace").value;t.workouts.push({type:document.getElementById("wType").value,mins,place,note:document.getElementById("wNote").value,time:new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})});if(!isFlex()){if(t.workouts.filter(w=>w.mins>=45).length>=1)t.tasks[0]=true;if(t.workouts.filter(w=>w.mins>=45).length>=2)t.tasks[1]=true;if(t.workouts.some(w=>w.place==="Outdoor"&&w.mins>=45))t.tasks[2]=true}else{if(t.workouts.some(w=>w.mins>=45))t.tasks[0]=true;if(t.workouts.some(w=>w.place==="Outdoor"))t.tasks[2]=true}document.getElementById("wNote").value="";save();render()}
+function renderWorkouts(){let ws=dayData().workouts||[],el=document.getElementById("workoutList");el.innerHTML=ws.length?ws.map((w,i)=>`<div class="workout"><b>${w.type}</b> · ${w.mins} min · <span class="badge">${w.place}</span>${w.note?`<div class="muted">${w.note}</div>`:""}<div class="muted">${w.time} · <a href="#" onclick="removeW(${i});return false" style="color:#f87171">remove</a></div></div>`).join(""):"Nothing logged yet."}
+function removeW(i){dayData().workouts.splice(i,1);save();render()}
+document.getElementById("photoInput").addEventListener("change",e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=x=>document.getElementById("photo").src=x.target.result;r.readAsDataURL(f)});
+function savePhoto(){let f=document.getElementById("photoInput").files[0];if(!f)return alert("Choose a photo first.");let r=new FileReader();r.onload=e=>{let img=new Image();img.onload=()=>{let c=document.createElement("canvas"),m=700,w=img.width,h=img.height;if(w>m){h=h*m/w;w=m}c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);let t=dayData();t.photo=c.toDataURL("image/jpeg",.68);t.tasks[isFlex()?5:7]=true;save();render()};img.src=e.target.result};r.readAsDataURL(f)}
+function saveWeight(){let v=+document.getElementById("weight").value;if(!v)return;data.weights.push({date:todayKey(),weight:v});document.getElementById("weight").value="";save();render()}
+function perfect(k,d){let arr=k===data.eventDate?FLEX:NORMAL;return arr.every((_,i)=>d.tasks&&d.tasks[i])}
+function renderProgress(){let t=dayData();if(t.photo)document.getElementById("photo").src=t.photo;document.getElementById("weights").innerHTML=data.weights.length?data.weights.slice(-8).reverse().map(x=>`<div class="workout"><b>${x.weight} lb</b> <span class="muted">— ${x.date}</span></div>`).join(""):"No weigh-ins yet.";let pd=Object.entries(data.days).filter(([k,d])=>perfect(k,d)).length;document.getElementById("perfectDays").textContent=pd;let streak=0,d=new Date(todayKey()+"T00:00:00");for(let i=0;i<75;i++){let k=localISO(d),x=data.days[k];if(x&&perfect(k,x))streak++;else if(i>0||x)break;d.setDate(d.getDate()-1)}document.getElementById("streak").textContent=streak}
+function saveDates(){data.startDate=document.getElementById("startDate").value||todayKey();data.eventDate=document.getElementById("eventDate").value||"2026-10-12";save();render()}function saveWhy(){data.why=document.getElementById("why").value;save();alert("Saved.")}function restart(){if(confirm("Restart at Day 1 today?")){data.days={};data.startDate=todayKey();save();render()}}
+function exportData(){let b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="locked-in-75-backup.json";a.click()}
+function importData(){let f=document.getElementById("importFile").files[0];if(!f)return;let r=new FileReader();r.onload=e=>{try{data=JSON.parse(e.target.result);save();render()}catch{alert("Could not read backup.")}};r.readAsText(f)}
+function showView(id,b){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");b.classList.add("active")}
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+render();
+</script>
+</body>
+</html>
